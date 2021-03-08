@@ -1,10 +1,11 @@
 import pybullet as p
 import pybullet_data
-import utils_ur5_robotiq140
+from . import utils_ur5_robotiq140
 from collections import deque
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import os
 
 
 class ur5_environment():
@@ -41,20 +42,22 @@ class ur5_environment():
         # Define world
         p.setGravity(0,0,-10)
         p.loadURDF("plane.urdf")
+        
+        file_dir = os.path.dirname(os.path.realpath(__file__))
 
         # Load desk
         table_start_pos = [0.0, -0.9, 0.8]
         table_start_orn = p.getQuaternionFromEuler([0, 0, 0])
-        p.loadURDF("./urdf/objects/table.urdf", table_start_pos, table_start_orn, useFixedBase=True)
+        p.loadURDF(file_dir + "/urdf/objects/table.urdf", table_start_pos, table_start_orn, useFixedBase=True)
 
         # Load stand
         ur5_stand_start_pos = [-0.7, -0.36, 0.0]
         ur5_stand_start_orn = p.getQuaternionFromEuler([0, 0, 0])
-        p.loadURDF("./urdf/objects/ur5_stand.urdf", ur5_stand_start_pos, ur5_stand_start_orn, useFixedBase=True)
+        p.loadURDF(file_dir + "/urdf/objects/ur5_stand.urdf", ur5_stand_start_pos, ur5_stand_start_orn, useFixedBase=True)
 
         # setup ur5 with robotiq 140 gripper
         # Path to robot file
-        sisbot_urdf_path = "./urdf/ur5_robotiq_140.urdf"
+        sisbot_urdf_path = file_dir + "/urdf/ur5_robotiq_140.urdf"
         # Robot start pos in cartesian coords
         robot_start_pos = [0,0,0.0]
         # Robot orientation in quaternion
@@ -196,12 +199,3 @@ class ur5_environment():
                 delayed_grip = False
 
             p.stepSimulation()
-
-
-env = ur5_environment(gui_mode=True)
-env.load_object("./urdf/objects/block.urdf")
-
-env.run_simulation(x=0.11, y=-0.5, z=1.45, roll=0, pitch=1.57, yaw=-1.57, grip=0.085, delayed_grip=False)
-env.run_simulation(x=0.11, y=-0.5, z=1.05, roll=0, pitch=1.57, yaw=-1.57, grip=0.045, delayed_grip=True)
-env.run_simulation(x=0.11, y=-0.5, z=1.30, roll=0, pitch=1.57, yaw=-1.57, grip=0.045, delayed_grip=False)
-
