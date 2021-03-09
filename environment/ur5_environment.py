@@ -8,27 +8,34 @@ import matplotlib.pyplot as plt
 import os
 
 
-class ur5_environment():
+class Environment():
     """ A class for the running a ur5 robot with a gripper"""
-    # Define camera image parameter
-    width = 128
-    height = 128
-    fov = 40
-    aspect = width / height
-    near = 0.1
-    far = 0.62
-    camera_eye_xyz = [0.1, -0.5, 1.425]
-    camera_target_xyz = [0.1, -0.50, 0.90]
-
 
     def __init__(self, gui_mode=False):
         """ Constructor: Initializes the robot and its environment"""
-        # Connect to engine servers
-        if gui_mode:
-            p.connect(p.GUI)
-        else:
-            p.connect(p.DIRECT)
+        # Define camera image parameter
+        self.width = 128
+        self.height = 128
+        self.fov = 40
+        self.aspect = self.width / self.height
+        self.near = 0.1
+        self.far = 0.62
+        self.camera_eye_xyz = [0.1, -0.5, 1.425]
+        self.camera_target_xyz = [0.1, -0.50, 0.90]
+        # Compute view and projection matrix
+        self.projection_matrix = p.computeProjectionMatrixFOV(self.fov, self.aspect, self.near, self.far)
+        self.view_matrix = p.computeViewMatrix(self.camera_eye_xyz, self.camera_target_xyz, [0, 1, 0])
         
+        # xyz of the target position
+        self.target_zone_pos = [-0.1, -0.70, 0.825]
+        # Compute min and max x,y coordinates of the target zone
+        target_size = 0.2
+        margin = target_size / 2;
+        self.min_x = self.target_zone_pos[0] - margin;
+        self.max_x = self.target_zone_pos[0] + margin;
+        self.min_y = self.target_zone_pos[1] - margin;
+        self.max_y = self.target_zone_pos[1] + margin;
+
         # Server mode
         self.gui_mode = gui_mode
         # ID of the to be grasped object
@@ -36,6 +43,9 @@ class ur5_environment():
         # Standard opening length of the gripper
         self.gripper_opening_length = 0.085
     
+        # Connect to engine servers
+        p.connect(p.GUI if gui_mode else p.DIRECT)
+
         # Add search path for loadURDFs
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
@@ -50,6 +60,10 @@ class ur5_environment():
         table_start_orn = p.getQuaternionFromEuler([0, 0, 0])
         p.loadURDF(file_dir + "/urdf/objects/table.urdf", table_start_pos, table_start_orn, useFixedBase=True)
 
+        # Load target square
+        target_zone_orn = p.getQuaternionFromEuler([0, 0, 0])
+        p.loadURDF(file_dir + '/urdf/objects/zone2.urdf', self.target_zone_pos, target_zone_orn, useFixedBase=True)
+        
         # Load stand
         ur5_stand_start_pos = [-0.7, -0.36, 0.0]
         ur5_stand_start_orn = p.getQuaternionFromEuler([0, 0, 0])
@@ -65,7 +79,7 @@ class ur5_environment():
         print("----------------------------------------")
         print("Loading robot from {}".format(sisbot_urdf_path))
         #Load robot returns robot ID
-        self.robot_ID = p.loadURDF(sisbot_urdf_path, robot_start_pos, robot_start_orn,useFixedBase = True,
+        self.robot_ID = p.loadURDF(sisbot_urdf_path, robot_start_pos, robot_start_orn, useFixedBase=True,
                             flags=p.URDF_USE_INERTIA_FROM_FILE)
         # Some utils function that gets robot info
         self.joints, self.control_robotic_c2, self.control_joints, self.mimic_parent_name = utils_ur5_robotiq140.setup_sisbot(p, self.robot_ID)
@@ -74,20 +88,26 @@ class ur5_environment():
 
     def get_camera_image(self):
         """ A method to return the camera image"""
-
-        projection_matrix = p.computeProjectionMatrixFOV(self.fov, self.aspect, self.near, self.far)
-        view_matrix = p.computeViewMatrix(self.camera_eye_xyz, self.camera_target_xyz, [0, 1, 0])
-        # Get images
         # Returns Width, height (both int), RGB Pixels, depth pixels, segmentation mask buffer
-        images = p.getCameraImage(self.width, self.height, view_matrix, projection_matrix,shadow=True,renderer=p.ER_BULLET_HARDWARE_OPENGL)
+        images = p.getCameraImage(self.width, self.height, self.view_matrix, self.projection_matrix, 
+            shadow=True,renderer=p.ER_BULLET_HARDWARE_OPENGL)
         return images
 
-    def load_object(self, file_path):
+    def load_object(self, file_path, pose, orn, fixed_base=False):
         """ A method to load a to be grasped object"""
+        self.object_ID = p.loadURDF(file_path, pose, p.getQuaternionFromEuler(orn), useFixedBase=fixed_base)
 
-        object_start_pos = [0.1, -0.49, 0.85]
-        object_start_orn = p.getQuaternionFromEuler([0, 0, 0])
-        self.object_ID = p.loadURDF(file_path, object_start_pos, object_start_orn)
+    def remove_current_object(self):
+        """Method to remove the currently loaded object"""
+        p.removeBody(self.object_ID)
+
+    def check_if_successful(self):
+        """ Method to check if object has been placed successfully in the target zone"""
+        object_pos, _ = p.getBasePositionAndOrientation(self.object_ID)
+        x, y, _ = object_pos
+        if x < self.max_x and x > self.min_x and y < self.max_y and y > self.min_y:
+            return True 
+        return False
 
     def run_simulation(self, x, y, z, roll, pitch, yaw, grip, delayed_grip):
         """ A method to run the simulation"""
@@ -109,10 +129,6 @@ class ur5_environment():
         fixed_joints[4] = -1.57
         fixed_joints[5] = 0
 
-        if self.gui_mode:
-            view_matrix = p.computeViewMatrix(self.camera_eye_xyz, self.camera_target_xyz, [0, 1, 0])
-            projection_matrix = p.computeProjectionMatrixFOV(self.fov, self.aspect, self.near, self.far)
-
         # If we don't have to wait for the delayed grip
         if not delayed_grip:
             self.gripper_opening_length = grip
@@ -125,7 +141,8 @@ class ur5_environment():
             
             if self.gui_mode:
                 # Returns Width, height (both int), RGB Pixels, depth pixels, segmentation mask buffer
-                images = p.getCameraImage(self.width, self.height, view_matrix, projection_matrix,shadow=True, renderer=p.ER_BULLET_HARDWARE_OPENGL)
+                p.getCameraImage(self.width, self.height, self.view_matrix, self.projection_matrix, 
+                    shadow=True, renderer=p.ER_BULLET_HARDWARE_OPENGL)
             
             # @TODO What is this?
             # rgb_opengl = np.reshape(images[2], (self.height, self.width, 4)) * 1. / 255.
@@ -191,11 +208,17 @@ class ur5_environment():
             if not disred_pose and error_x < margin and error_y < margin and error_z < margin and error_roll < margin \
                 and error_pitch < margin and error_yaw < margin:
                 disred_pose = True
-                target_delay = control_cnt + 150
+                target_delay = control_cnt + 100
                 self.gripper_opening_length = grip
 
             # If desired pose has been reached and we are wating for a delayed grip
             if disred_pose and control_cnt == target_delay:
                 delayed_grip = False
 
+            p.stepSimulation()
+
+    def keep_running(self):
+        """Debugger function """
+        
+        while True:
             p.stepSimulation()
