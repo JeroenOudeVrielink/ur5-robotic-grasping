@@ -14,13 +14,13 @@
 
     <visual>
       <geometry>
-        <box size="1 1 0.05"/>
+        <box size="1.8 1 0.05"/>
       </geometry>
     </visual>
 
     <collision>
       <geometry>
-        <box size="1 1 0.05"/>
+        <box size="1.8 1 0.05"/>
       </geometry>
     </collision>
 
