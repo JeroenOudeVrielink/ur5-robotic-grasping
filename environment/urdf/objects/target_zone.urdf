@@ -1,5 +1,5 @@
-<robot name="block">
-  <link name="block">
+<robot name="zone">
+  <link name="zone">
 
     <inertial>
       <origin xyz="0 0 0" />
@@ -10,21 +10,18 @@
     <visual>
       <origin xyz="0 0 0"/>
       <geometry>
-        <box size="0.085 0.085 0.045" />
+        <box size="0.2 0.2 0.0005" />
       </geometry>
       <material name="red">
-        <color rgba="0.4 0.4 1.0 1.0"/>
+        <color rgba="1 0 0 1.0"/>
       </material>
     </visual>
 
     <collision>
-      <origin xyz="0 0 0"/>
       <geometry>
-        <box size="0.085 0.085 0.045" />
+        <box size="0.2 0.2 0.0005"/>
       </geometry>
     </collision>
 
   </link>
-
-
 </robot>
