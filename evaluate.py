@@ -1,84 +1,99 @@
-import numpy as np
-import os
-import pybullet as p
-from imageio import imsave
-
+from math import e
 from environment.ur5_environment import Environment
 from objects.pybullet_object_models import ycb_objects
-import matplotlib.pyplot as plt
-from GR_ConvNet.grasp_generator import GraspGenerator
+from grasp_generator import GraspGenerator
+import numpy as np
+import random
+import os
+import sys
+sys.path.append('network')
+
+def calc_ppc(seg_mask):
+    print(seg_mask.shape)
+    print(seg_mask[122, :])
+    print(len(seg_mask))
+    unique, counts = np.unique(seg_mask[122, :], return_counts=True)
+    print(dict(zip(unique, counts)))
 
 
+def random_pos(x, y, x_range, y_range):
+    r_x = np.random.uniform(x - x_range, x + x_range)
+    r_y = np.random.uniform(y - y_range, y + y_range)
+    orn = np.random.uniform(0, np.pi)
+    return r_x, r_y, orn
 
-def evaluate():
+def evaluate(n_trials):
+    gui_mode = True
+    show_output = True
 
+    # Get list of object namesS
+    list_dirs = os.listdir('objects/pybullet_object_models/ycb_objects')
+    objects = [item for item in list_dirs if item.startswith('Ycb')]
+    random.shuffle(objects)
 
-
-    env = Environment(gui_mode=True, show_debug=True)
-    
-    obj_start_pos = [0.1, -0.65, 0.81]
-    obj_start_orn = [0, 0, 0.5]
+    # Create dictironary to count succesfull grasp
+    succes_rate = dict.fromkeys(objects , 0)
 
     # Setup Network
-    conv_net = GraspGenerator(
-        '/home/jeroen-ov/Documents/bachelors_project/GR-ConvNet/trained-models/cornell-randsplit-rgbd-grconvnet3-drop1-ch32/epoch_19_iou_0.98', 
-        alpha= -np.pi * 0.5,
-        ppc=3, 
-        cam_xyz= env.camera_eye_xyz)
+    network_path = 'network/trained-models/cornell-randsplit-rgbd-grconvnet3-drop1-ch32/epoch_19_iou_0.98'
+    conv_net = GraspGenerator(network_path)
     
-    #x=0.1, y=-0.5, z=1.45, roll=0, pitch=1.57, yaw=-1.57, grip=0.085, delayed_grip=False
-    robot_start_pos = [0.4, -0.1, 0.9, 0, 1.57, -1.57, 0.085, False]
-    robot_target_zone_pos = [0.50, -0.40, 0.85, 0, 1.57, -1.57, 0.085, True]
-    # robot_target_zone_pos = [0.2, -0.50, 0.85, 0, 1.57, -1.57, 0.085, True]
+    # Create environment
+    env = Environment(gui_mode)
+    robot_start_pos = [-0.3, -0.3, 1.1, 0, 1.57, -1.57, 0.14]
+    # target zone coordinates
+    x_t, y_t = env.target_zone_pos[0], env.target_zone_pos[1]
+    # Bring robot in start neutral position
+    env.run(0.1, -0.55, 1.1, 0, 1.57, -1.57, 0.14, delayed_grip=False, setup=True)
 
+    # objects = ['YcbCrackerBox','YcbChipsCan', 'YcbPowerDrill', 'YcbMustardBottle', 'YcbGelatinBox', 'YcbTomatoSoupCan']
+    # objects = ['YcbStrawberry', 'YcbScissors', 'YcbMediumClamp', 'YcbTennisBall', 'YcbPear']
+    objects = [ 'YcbBanana']
 
-    objects = ['YcbPottedMeatCan']
-    # objects = ['objects/test_cube2.urdf']
+    x_o, y_o, z_o = 0.1, -0.60, 0.785
 
-    env.run_simulation(0.1, -0.55, 1.0, 0, 1.57, -1.57, 0.085, False, True)
+    for obj in objects:
+        for n in range(n_trials):
 
-    for obj_name in objects:
-        # Load object
-        env.load_object(os.path.join(ycb_objects.getDataPath(), obj_name, "model.urdf"), obj_start_pos, obj_start_orn)
-        # env.load_object(obj_name, obj_start_pos, obj_start_orn)
-        # Bring robot in start pos
-        env.run_simulation(*robot_start_pos)
-        # Get camera images
-        rgb_img, depth_img, seg_mask = env.get_camera_image()
-
-        # imsave(f'{obj_name}1.png', rgb_img)
-        # imsave(f'{obj_name}1.tiff', depth_img.astype(np.float32))
+            # Get random x, y, and orientation
+            x, y, orn = random_pos(x_o, y_o, 0.1, 0.1)
+            # Load object
+            env.load_object(os.path.join(ycb_objects.getDataPath(), obj, "model.urdf"), [x, y, z_o], [0, 0, orn])
+            # env.load_object(os.path.join(ycb_objects.getDataPath(), obj, "model.urdf"), [0.1, -0.6, z_o], [0, 0, 0])
+            # env.load_object('objects/test_cube1.urdf', [0.1, -0.6, z_o], [0, 0, 0])
         
-        # plt.imshow(depth_img)
-        # plt.colorbar(label='Pixel value')
-        # plt.title('Seg mask image')
-        # plt.show()
+            # Bring robot in start pos
+            env.run(*robot_start_pos)
 
+            env.pause_till_obj_at_rest()
+            # Get camera images
+            rgb_img, depth_img, seg_mask = env.get_camera_image()
 
-        # plt.imshow(rgb_img)
-        # plt.show()
+            # GR-ConvNet
+            x, y, z, roll, opening_len, obj_height = conv_net.predict(rgb_img, depth_img, show_output)
+            # x, y, z, roll, opening_len, obj_height = 0.1, -0.6, 0.785, 0.5 * np.pi, 0.0438, 0.1
+            print(obj + f'x:{x}, y:{y}, z{z}, roll{roll}, opening len:{opening_len}, obj_height:{obj_height}')
+            opening_len *= 0.50
+            # print(f'reduced:{opening_len}')
 
-        # ==============================================
-        # GR-ConvNet
-        x, y, z, roll, opening_len = conv_net.predict(rgb_img, depth_img, show_output=True)
-        print(f'x:{x} y:{y}, z:{z}, roll:{roll}, opening len:{opening_len}')
+            # Move above object
+            env.run(x, y, 1.1, roll, 1.57, -1.57, 0.14, delayed_grip=False)
+            # Grip object
+            env.run(x, y, z, roll, 1.57, -1.57, opening_len, delayed_grip=True)
 
-        # ==============================================
+            z_t = 0.8 + obj_height
+            env.run(x_t, y_t, z_t, roll, 1.57, -1.57, opening_len, rpy_margin = 0.35, delayed_grip=False)
+            env.run(x_t, y_t, z_t, roll, 1.57, -1.57, 0.14, rpy_margin = 0.35, delayed_grip=True)
 
-        env.run_simulation(x=x, y=y, z=1.0, roll=roll, pitch=1.57, yaw=-1.57, grip=0.085, delayed_grip=False)
-        print('pre pos')
-        env.run_simulation(x=x, y=y, z=z, roll=roll, pitch=1.57, yaw=-1.57, grip=0.03, delayed_grip=True)
-        print('move done')
-
-        robot_target_zone_pos[3] = roll
-        env.run_simulation(*robot_target_zone_pos)
-
-        # Check if object has been successfully placed in the target zone
-        print(env.check_if_successful())
-        # Remove object
-        env.remove_current_object()
+            # Check if object has been successfully placed in the target zone
+            if env.check_if_successful():
+                succes_rate[obj] += 1
+            
+            # Remove object
+            env.remove_current_object()
+    
+    print(succes_rate)
 
 
 if __name__ == '__main__':
-    # evaluate()
-    print(dir(ycb_objects))
+    evaluate(1)

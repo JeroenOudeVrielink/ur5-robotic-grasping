@@ -70,7 +70,7 @@ def plot_results(
     plt.colorbar(plot)
 
     # plt.pause(0.1)
-    fig.canvas.draw()
+    # fig.canvas.draw()
 
 
 def plot_grasp(
@@ -108,13 +108,9 @@ def plot_grasp(
     ax.set_title('Grasp')
     ax.axis('off')
 
-    plt.pause(0.1)
-    fig.canvas.draw()
-
-    if save:
-        time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        fig.savefig('results/{}.png'.format(time))
-
+    # plt.pause(0.1)
+    # fig.canvas.draw()
+        
 
 def save_results(rgb_img, grasp_q_img, grasp_angle_img, depth_img=None, no_grasps=1, grasp_width_img=None):
     """

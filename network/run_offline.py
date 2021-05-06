@@ -6,11 +6,11 @@ import numpy as np
 import torch.utils.data
 from PIL import Image
 
-from hardware.device import get_device
-from inference.post_process import post_process_output
-from utils.data.camera_data import CameraData
-from utils.visualisation.plot import plot_results, save_results
-from utils.dataset_processing.grasp import detect_grasps
+from network.hardware.device import get_device
+from network.inference.post_process import post_process_output
+from network.utils.data.camera_data import CameraData
+from network.utils.visualisation.plot import plot_results, save_results
+from network.utils.dataset_processing.grasp import detect_grasps
 
 logging.basicConfig(level=logging.INFO)
 
@@ -98,5 +98,6 @@ if __name__ == '__main__':
 
         grasps = detect_grasps(q_img, ang_img, width_img=width_img, no_grasps=args.n_grasps)
         grasp = grasps[0]
+        print(grasp)
         
 
