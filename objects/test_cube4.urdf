@@ -10,7 +10,7 @@
     <visual>
       <origin xyz="0 0 0"/>
       <geometry>
-        <box size="0.1 0.085 0.0001" />
+        <box size="0.003 0.003 0.05" />
       </geometry>
       <material name="black">
         <color rgba="0 0 0 1.0"/>
@@ -20,7 +20,7 @@
     <collision>
       <origin xyz="0 0 0"/>
       <geometry>
-        <box size="0.1 0.085 0.0001" />
+        <box size="0.003 0.003 0.05" />
       </geometry>
     </collision>
 

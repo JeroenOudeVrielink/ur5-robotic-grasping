@@ -21,10 +21,11 @@ def random_pos(x, y, x_range, y_range):
     return r_x, r_y, orn
 
 def test():
-
+    network_path = 'network/trained-models/cornell-randsplit-rgbd-grconvnet3-drop1-ch32/epoch_19_iou_0.98'
     camera = Camera((0.1, -0.55, 1.9), 0.2, 2.0, (244, 244), 40)
-
     env = Environment(camera, vis=True, debug=True, num_objs=0, gripper_type='140')
+    generator = GraspGenerator(network_path, camera, 0, -np.pi*0.5, 300)
+
     q_orn = p.getQuaternionFromEuler([0 ,0, 0])
     
     # env.load_object('ycb_objects/YcbCrackerBox/model.urdf', [0.1, -0.55, 0.785], q_orn)

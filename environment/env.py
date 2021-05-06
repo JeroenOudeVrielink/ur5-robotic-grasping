@@ -89,7 +89,7 @@ class Environment:
         self.ee_position_limit = ((-0.8, 0.8),
                                   (-0.8, 0.8),
                                   (0.785, 1.4))
-        self.reset_robot()
+        # self.reset_robot()
 
     def step_simulation(self):
         """

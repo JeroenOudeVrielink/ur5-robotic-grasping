@@ -240,12 +240,12 @@ class Camera:
 
         return position[:3]
 
-    def shot(self):
+    def get_cam_img(self):
         # Get depth values using the OpenGL renderer
         _w, _h, rgb, depth, seg = p.getCameraImage(self.width, self.height,
                                                    self.view_matrix, self.projection_matrix,
                                                    )
-        return rgb, depth, seg
+        return rgb[:,:,0:3], depth, seg
 
     def rgbd_2_world_batch(self, depth):
         x = (2 * np.arange(0, self.width) - self.width) / self.width
