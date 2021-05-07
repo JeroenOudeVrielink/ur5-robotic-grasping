@@ -1,8 +1,6 @@
 # ur5-robotic-grasping
 
-300 pixels per 100cm
-30 pixels per 10 cm
-3 pixels per 1 cm
+307 pixels per meter
 
 
 i:0 name:shoulder_pan_joint
