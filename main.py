@@ -1,5 +1,3 @@
-from environment.ur5_environment import Environment
-from objects.pybullet_object_models import ycb_objects
 import matplotlib.pyplot as plt
 from imageio import imsave
 import numpy as np

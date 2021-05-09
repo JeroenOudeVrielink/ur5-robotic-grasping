@@ -22,9 +22,9 @@ def random_pos(x, y, x_range, y_range):
 
 def test():
     network_path = 'network/trained-models/cornell-randsplit-rgbd-grconvnet3-drop1-ch32/epoch_19_iou_0.98'
-    camera = Camera((0.1, -0.55, 1.9), 0.2, 2.0, (244, 244), 40)
+    camera = Camera((0.1, -0.55, 1.9), (0.1, -0.55, 0.785), 0.2, 2.0, (224, 224), 40)
     env = Environment(camera, vis=True, debug=True, num_objs=0, gripper_type='140')
-    generator = GraspGenerator(network_path, camera, 0, -np.pi*0.5, 300)
+    generator = GraspGenerator(network_path, camera, 5)
 
     q_orn = p.getQuaternionFromEuler([0 ,0, 0])
     
@@ -38,15 +38,19 @@ def test():
 
     env.load_object('objects/ycb_objects/YcbBanana/model.urdf', [0.1, -0.55, 0.785], q_orn)
     env.move_away_arm()
-    camera.shot()
+    rgb, depth, _ = camera.get_cam_img()
+    x, y, z, roll, opening_len, obj_height = generator.predict(rgb, depth, True)
+    print(f'x:{x} y:{y}, z:{z}, roll:{roll}, opening len:{opening_len}, obj height:{obj_height}')
+    p.addUserDebugLine([x, y, 0.785], [x, y, 1.1], [0, 0, 1])
 
-    succes_grasp, succes_target = env.grasp((0.1, -0.55, 0.785), 0, 0.030, 0.035)
+
+    succes_grasp, succes_target = env.grasp((x, y, z), roll, opening_len, obj_height)
     print(f'Grasped:{succes_grasp} Target:{succes_target}')
     env.remove_object()
 
     env.load_object('objects/ycb_objects/YcbMustardBottle/model.urdf', [0.1, -0.55, 0.785], q_orn)
     env.move_away_arm()
-    camera.shot()
+    camera.get_cam_img()
 
     succes_grasp, succes_target = env.grasp((0.1, -0.55, 0.87), np.pi*0.5, 0.040, 0.175)
     print(f'Grasped:{succes_grasp} Target:{succes_target}')

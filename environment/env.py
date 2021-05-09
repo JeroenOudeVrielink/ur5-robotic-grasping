@@ -89,7 +89,7 @@ class Environment:
         self.ee_position_limit = ((-0.8, 0.8),
                                   (-0.8, 0.8),
                                   (0.785, 1.4))
-        # self.reset_robot()
+        self.reset_robot()
 
     def step_simulation(self):
         """
@@ -318,7 +318,7 @@ class Environment:
         y_orn = p.getQuaternionFromEuler([0, np.pi/2, 0.0])
         # y_orn = np.array(p.getLinkState(self.robotID, self.eefID)[1:2][0])
 
-        self.move_away_arm()
+        # self.move_away_arm()
         self.move_ee([self.TARGET_ZONE_POS[0], self.TARGET_ZONE_POS[1], self.GRIPPER_MOVING_HEIGHT, y_orn])
         self.move_ee([self.TARGET_ZONE_POS[0], self.TARGET_ZONE_POS[1], y_drop, y_orn])
         self.move_gripper(0.085)

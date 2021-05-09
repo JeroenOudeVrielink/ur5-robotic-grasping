@@ -226,6 +226,13 @@ class Camera:
         self.view_matrix = p.computeViewMatrix(cam_pos, cam_target, [0, 1, 0])
 
     def get_cam_img(self):
+        """
+        Method to get images from camera
+        return:
+        rgb
+        depth
+        segmentation mask
+        """
         # Get depth values using the OpenGL renderer
         _w, _h, rgb, depth, seg = p.getCameraImage(self.width, self.height,
                                                    self.view_matrix, self.projection_matrix,
