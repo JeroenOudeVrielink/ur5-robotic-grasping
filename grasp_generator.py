@@ -12,9 +12,10 @@ from network.utils.dataset_processing.grasp import detect_grasps
 
 
 class GraspGenerator:
-    CAM_ROTATION = 0
+    IMG_WIDTH = 224
     IMG_ROTATION = -np.pi * 0.5
-    PIX_CONVERSION = 295
+    CAM_ROTATION = 0
+    PIX_CONVERSION = 276
     DIST_BACKGROUND = 1.115
     MAX_GRASP = 0.085
     
@@ -22,13 +23,12 @@ class GraspGenerator:
         self.net = torch.load(net_path)
         self.device = get_device(force_cpu=False)
         
-        self.img_width = camera.width
         self.near = camera.near
         self.far = camera.far
         self.depth_r = depth_radius
 
         # Get rotation matrix
-        img_center = camera.width / 2 - 0.5
+        img_center = self.IMG_WIDTH / 2 - 0.5
         self.img_to_cam = self.get_transform_matrix(-img_center/self.PIX_CONVERSION, 
                                                     img_center/self.PIX_CONVERSION, 
                                                     0, 
@@ -44,16 +44,18 @@ class GraspGenerator:
                         ])
 
     def grasp_to_robot_frame(self, grasp, depth_img):
+        """
+        return: x, y, z, roll, opening length gripper, object height
+        """
         # Get x, y, z of center pixel
-
         x_p, y_p = grasp.center[0], grasp.center[1]
         # print(f'x_p:{x_p} y_p:{y_p}')
 
         # Get area of depth values around center pixel
-        x_min = np.clip(x_p-self.depth_r, 0, self.img_width)
-        x_max = np.clip(x_p+self.depth_r, 0, self.img_width)
-        y_min = np.clip(y_p-self.depth_r, 0, self.img_width)
-        y_max = np.clip(y_p+self.depth_r, 0, self.img_width)
+        x_min = np.clip(x_p-self.depth_r, 0, self.IMG_WIDTH)
+        x_max = np.clip(x_p+self.depth_r, 0, self.IMG_WIDTH)
+        y_min = np.clip(y_p-self.depth_r, 0, self.IMG_WIDTH)
+        y_max = np.clip(y_p+self.depth_r, 0, self.IMG_WIDTH)
         depth_values = depth_img[x_min:x_max, y_min:y_max]
     
         # Get minimum depth value from selected area
@@ -77,7 +79,7 @@ class GraspGenerator:
             roll += np.pi
 
         # Covert pixel width to gripper width
-        opening_length = (grasp.length / self.PIX_CONVERSION) * self.MAX_GRASP
+        opening_length = grasp.length / self.PIX_CONVERSION
 
         obj_height = self.DIST_BACKGROUND - z_p
 
@@ -85,24 +87,19 @@ class GraspGenerator:
         return robot_frame_ref[0], robot_frame_ref[1], robot_frame_ref[2], roll, opening_length, obj_height
 
     def predict(self, rgb, depth, show_output=False):
-    
         depth = np.expand_dims(np.array(depth), axis=2)
         img_data = CameraData(width=224, height=224)
         x, depth_img, rgb_img = img_data.get_data(rgb=rgb, depth=depth)
 
-        # plt.imshow(depth_img[0])
-        # plt.colorbar(label='Pixel value')
-        # plt.title('Depth image')
-        # plt.show()
-
         with torch.no_grad():
             xc = x.to(self.device)
             pred = self.net.predict(xc)
-
-            q_img, ang_img, width_img = post_process_output(pred['pos'], pred['cos'], pred['sin'], pred['width'])
-
-            print(q_img.shape)
-
+            pixels_max_grasp = int(self.MAX_GRASP * self.PIX_CONVERSION)
+            q_img, ang_img, width_img = post_process_output(pred['pos'], 
+                                                            pred['cos'], 
+                                                            pred['sin'], 
+                                                            pred['width'], 
+                                                            pixels_max_grasp)
             if show_output:
                 fig = plt.figure(figsize=(10, 10))
                 plot_results(fig=fig,
@@ -112,7 +109,7 @@ class GraspGenerator:
                                 no_grasps=1,
                                 grasp_width_img=width_img)
                 time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                fig.savefig('results/{}.png'.format(time))
+                fig.savefig('network_output/{}.png'.format(time))
             
             grasps = detect_grasps(q_img, ang_img, width_img=width_img, no_grasps=1)  
             return self.grasp_to_robot_frame(grasps[0], depth)

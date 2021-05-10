@@ -1,0 +1,16 @@
+Banana
+ChipsCan
+CrackerBox
+FoamBrick
+GelatinBox
+Hammer
+MasterChefCan
+MediumClamp
+MustardBottle
+Pear
+PottedMeatCan
+PowerDrill
+Scissors
+Strawberry
+TennisBall
+TomatoSoupCan

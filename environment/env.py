@@ -16,9 +16,13 @@ class Environment:
     GRIPPER_GRASPED_LIFT_HEIGHT = 1.2
     TARGET_ZONE_POS = [0.6, 0.0, 0.785]
     SIMULATION_STEP_DELAY = 1 / 400.
+    FINGER_LENGTH = 0.06
+    Z_TABLE = 0.785
+    GRIP_REDUCTION = 0.7
 
     def __init__(self, camera: Camera, vis=False, debug=False, num_objs=3, gripper_type='85') -> None:
         self.vis = vis
+        self.debug = debug
         self.num_objs = num_objs
         self.camera = camera
 
@@ -103,7 +107,7 @@ class Environment:
             end = np.array(eef_xyz[0])
             end[2] -= 0.5
             self.eef_debug_lineID = p.addUserDebugLine(np.array(eef_xyz[0]), end, [1, 0, 0])
-            time.sleep(self.SIMULATION_STEP_DELAY)
+            time.sleep(self.SIMULATION_STEP_DELAY)        
 
     def load_object(self, path, pos, orn):
         # load object
@@ -139,7 +143,8 @@ class Environment:
             self.step_simulation()
             if self.is_still(self.objID):
                 return
-        print('Warning: Not still after MAX_WAIT_EPOCHS = %d.' % max_wait_epochs)
+        if self.debug:
+            print('Warning: Not still after MAX_WAIT_EPOCHS = %d.' % max_wait_epochs)
 
     def read_debug_parameter(self):
         # read the value of task parameter
@@ -274,7 +279,8 @@ class Environment:
                 still_open_flag_ = self.close_gripper(check_contact=True)
             # Check if contact with objects
             if check_collision_config and self.gripper_contact(**check_collision_config):
-                print('Collision detected!', self.check_grasped_id())
+                if self.debug:
+                    print('Collision detected!', self.check_grasped_id())
                 return False, p.getLinkState(self.robotID, self.eefID)[0:2]
             # Check xyz and rpy error
             real_xyz, real_xyzw = p.getLinkState(self.robotID, self.eefID)[0:2]
@@ -287,21 +293,29 @@ class Environment:
                 return True, (real_xyz, real_xyzw)
 
         # raise FailToReachTargetError
-        print('Failed to reach the target')
+        if self.debug:
+            print('Failed to reach the target')
         return False, p.getLinkState(self.robotID, self.eefID)[0:2]
 
     def grasp(self, pos: tuple, roll: float, gripper_opening_length: float, obj_height: float, debug: bool = False):
         """
+        Method to perform grasp
         pos [x y z]: The axis in real-world coordinate
         roll: float,   for grasp, it should be in [-pi/2, pi/2)
         """
+        succes_grasp, succes_target = False, False        
+        
         x, y, z = pos
+        # Substracht gripper finger length from z
+        z -= self.FINGER_LENGTH
         z = np.clip(z, *self.ee_position_limit[2])
-        succes_grasp, succes_target = False, False
 
         # Move above target
         orn = p.getQuaternionFromEuler([roll, np.pi/2, 0.0])
         self.move_ee([x, y, self.GRIPPER_MOVING_HEIGHT, orn])
+
+        # Reduce grip to get a tighter grip
+        gripper_opening_length *= self.GRIP_REDUCTION
 
         # Grasp and lift object
         z_offset = self.calc_z_offset(gripper_opening_length)
@@ -325,7 +339,7 @@ class Environment:
         self.move_ee([self.TARGET_ZONE_POS[0], self.TARGET_ZONE_POS[1], self.GRIPPER_MOVING_HEIGHT, y_orn])
 
         #Wait till objct is at rest then check if it makes contact with target zone
-        self.wait_until_still()
+        self.wait_until_still(200)
         if self.check_contact(self.target_zoneID, self.objID):
             succes_target = True
 

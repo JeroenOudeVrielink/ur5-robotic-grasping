@@ -134,4 +134,6 @@ dmypy.json
 test.py
 *.pdf
 /results
-debug_reference_conversion.py
+debug_coords_tf.py
+test_ycb_wrapper.py
+/network_output
