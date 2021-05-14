@@ -15,7 +15,7 @@ class GraspGenerator:
     IMG_WIDTH = 224
     IMG_ROTATION = -np.pi * 0.5
     CAM_ROTATION = 0
-    PIX_CONVERSION = 276
+    PIX_CONVERSION = 277
     DIST_BACKGROUND = 1.115
     MAX_GRASP = 0.085
     
@@ -79,7 +79,7 @@ class GraspGenerator:
             roll += np.pi
 
         # Covert pixel width to gripper width
-        opening_length = grasp.length / self.PIX_CONVERSION
+        opening_length = (grasp.length / int(self.MAX_GRASP * self.PIX_CONVERSION)) * self.MAX_GRASP
 
         obj_height = self.DIST_BACKGROUND - z_p
 
@@ -106,10 +106,11 @@ class GraspGenerator:
                                 rgb_img=img_data.get_rgb(rgb, False),
                                 grasp_q_img=q_img,
                                 grasp_angle_img=ang_img,
-                                no_grasps=1,
+                                no_grasps=3,
                                 grasp_width_img=width_img)
                 time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                fig.savefig('network_output/{}.png'.format(time))
+                save_name = 'network_output/{}'.format(time)
+                fig.savefig(save_name + '.png')
             
-            grasps = detect_grasps(q_img, ang_img, width_img=width_img, no_grasps=1)  
-            return self.grasp_to_robot_frame(grasps[0], depth)
+            grasps = detect_grasps(q_img, ang_img, width_img=width_img, no_grasps=3)  
+            return self.grasp_to_robot_frame(grasps[0], depth), save_name

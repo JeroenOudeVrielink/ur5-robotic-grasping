@@ -71,6 +71,8 @@ def plot_results(
 
     # plt.pause(0.1)
     # fig.canvas.draw()
+    plt.close()
+
 
 
 def plot_grasp(

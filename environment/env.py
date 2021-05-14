@@ -12,13 +12,13 @@ class FailToReachTargetError(RuntimeError):
 
 class Environment:
     OBJECT_INIT_HEIGHT = 1.05
-    GRIPPER_MOVING_HEIGHT = 1.3
-    GRIPPER_GRASPED_LIFT_HEIGHT = 1.2
-    TARGET_ZONE_POS = [0.6, 0.0, 0.785]
+    GRIPPER_MOVING_HEIGHT = 1.25
+    GRIPPER_GRASPED_LIFT_HEIGHT = 1.4
+    TARGET_ZONE_POS = [0.7, 0.0, 0.685]
     SIMULATION_STEP_DELAY = 1 / 400.
     FINGER_LENGTH = 0.06
     Z_TABLE = 0.785
-    GRIP_REDUCTION = 0.7
+    GRIP_REDUCTION = 0.60
 
     def __init__(self, camera: Camera, vis=False, debug=False, num_objs=3, gripper_type='85') -> None:
         self.vis = vis
@@ -36,24 +36,29 @@ class Environment:
         self.physicsClient = p.connect(p.GUI if self.vis else p.DIRECT)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setGravity(0, 0, -10)
-        self.planeID = p.loadURDF("plane.urdf")
-        self.tableID = p.loadURDF("environment/urdf/objects/table.urdf",
+        self.planeID = p.loadURDF('plane.urdf')
+        self.tableID = p.loadURDF('environment/urdf/objects/table.urdf',
                                   [0.0, -0.65, 0.76],
                                   p.getQuaternionFromEuler([0, 0, 0]),
                                   useFixedBase=True)
-        self.target_tableID = p.loadURDF("environment/urdf/objects/target_table.urdf",
-                                  [0.7, 0.0, 0.76],
+        self.target_tableID = p.loadURDF('environment/urdf/objects/target_table.urdf',
+                                  [0.7, 0.0, 0.66],
                                   p.getQuaternionFromEuler([0, 0, 0]),
                                   useFixedBase=True)
-        self.target_zoneID = p.loadURDF("environment/urdf/objects/target_zone.urdf",
+        # self.target_zoneID = p.loadURDF('environment/urdf/objects/target_zone.urdf',
+        #                           self.TARGET_ZONE_POS,
+        #                           p.getQuaternionFromEuler([0, 0, 0]),
+        #                           useFixedBase=True)        
+        self.targetID = p.loadURDF('environment/urdf/objects/traybox.urdf',
                                   self.TARGET_ZONE_POS,
                                   p.getQuaternionFromEuler([0, 0, 0]),
-                                  useFixedBase=True)
-        self.UR5StandID = p.loadURDF("environment/urdf/objects/ur5_stand.urdf",
+                                  useFixedBase=True,
+                                  globalScaling=0.7)
+        self.UR5StandID = p.loadURDF('environment/urdf/objects/ur5_stand.urdf',
                                      [-0.7, -0.36, 0.0],
                                      p.getQuaternionFromEuler([0, 0, 0]),
                                      useFixedBase=True)
-        self.robotID = p.loadURDF("environment/urdf/ur5_robotiq_%s.urdf" % gripper_type,
+        self.robotID = p.loadURDF('environment/urdf/ur5_robotiq_%s.urdf' % gripper_type,
                                   [0, 0, 0.0],  # StartPosition
                                   p.getQuaternionFromEuler([0, 0, 0]),  # StartOrientation
                                   useFixedBase=True,
@@ -73,13 +78,13 @@ class Environment:
         # custom sliders to tune parameters (name of the parameter,range,initial value)
         # Task space (Cartesian space)
         if debug:
-            self.xin = p.addUserDebugParameter("x", -0.224, 0.224, 0.11)
-            self.yin = p.addUserDebugParameter("y", -0.724, -0.276, -0.49)
-            self.zin = p.addUserDebugParameter("z", 1.0, 1.3, 1.29)
-            self.rollId = p.addUserDebugParameter("roll", -3.14, 3.14, 0)  # -1.57 yaw
-            self.pitchId = p.addUserDebugParameter("pitch", -3.14, 3.14, np.pi/2)
-            self.yawId = p.addUserDebugParameter("yaw", -np.pi/2, np.pi/2, 0)  # -3.14 pitch
-            self.gripper_opening_length_control = p.addUserDebugParameter("gripper_opening_length", 0, 0.085, 0.085)
+            self.xin = p.addUserDebugParameter('x', -0.4, 0.4, 0.11)
+            self.yin = p.addUserDebugParameter('y', -0.8, 0, -0.49)
+            self.zin = p.addUserDebugParameter('z', 0.9, 1.3, 1.1)
+            self.rollId = p.addUserDebugParameter('roll', -3.14, 3.14, 0)  # -1.57 yaw
+            self.pitchId = p.addUserDebugParameter('pitch', -3.14, 3.14, np.pi/2)
+            self.yawId = p.addUserDebugParameter('yaw', -np.pi/2, np.pi/2, 0)  # -3.14 pitch
+            self.gripper_opening_length_control = p.addUserDebugParameter('gripper_opening_length', 0, 0.1, 0.085)
 
         # Add debug lines for end effector and camera
         if vis:
@@ -89,7 +94,7 @@ class Environment:
             # p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, 0) 
 
         # Setup some Limit
-        self.gripper_open_limit = (0.0, 0.085)
+        self.gripper_open_limit = (0.0, 0.1)
         self.ee_position_limit = ((-0.8, 0.8),
                                   (-0.8, 0.8),
                                   (0.785, 1.4))
@@ -114,15 +119,15 @@ class Environment:
         self.objID = p.loadURDF(path, pos, orn)
         # adjust position according to height
         aabb = p.getAABB(self.objID, -1)
-        y_min, y_max = aabb[0][2], aabb[1][2]    
-        pos[2] += (y_max - y_min) / 2 
+        z_min, z_max = aabb[0][2], aabb[1][2]    
+        pos[2] += (z_max - z_min) / 2 
         p.resetBasePositionAndOrientation(self.objID, pos, orn)
         #change dynamics
         p.changeDynamics(self.objID, -1, lateralFriction=1, restitution=0.01)
         # wait until object is at rest
         for _ in range(10):
             self.step_simulation()
-        self.wait_until_still()
+        self.wait_until_still(500)
 
     def remove_object(self):
         if self.objID == None:
@@ -196,6 +201,16 @@ class Environment:
         contact_a = p.getContactPoints(bodyA=id_a)
         contact_ids = set(item[2] for item in contact_a if item[2] in [id_b])
         if len(contact_ids) == 1:
+            return True
+        return False
+
+    def check_target_reached(self):
+        aabb = p.getAABB(self.targetID, -1)
+        x_min, x_max = aabb[0][0], aabb[1][0]
+        y_min, y_max = aabb[0][1], aabb[1][1]
+        pos = p.getBasePositionAndOrientation(self.objID)
+        x, y = pos[0][0], pos[0][1]
+        if x > x_min and x < x_max and y > y_min and y < y_max:
             return True
         return False
 
@@ -311,6 +326,8 @@ class Environment:
         z = np.clip(z, *self.ee_position_limit[2])
 
         # Move above target
+        self.reset_robot()
+        self.move_gripper(0.1)
         orn = p.getQuaternionFromEuler([roll, np.pi/2, 0.0])
         self.move_ee([x, y, self.GRIPPER_MOVING_HEIGHT, orn])
 
@@ -320,7 +337,8 @@ class Environment:
         # Grasp and lift object
         z_offset = self.calc_z_offset(gripper_opening_length)
         self.move_ee([x, y, z + z_offset, orn])
-        self.move_gripper(gripper_opening_length)
+        # self.move_gripper(gripper_opening_length)
+        self.auto_close_gripper(check_contact=True)
         self.move_ee([self.camera.x, self.camera.y, self.GRIPPER_MOVING_HEIGHT, orn])
 
         # If the object has been grasped and lifted off the table
@@ -328,19 +346,19 @@ class Environment:
             succes_grasp = True
 
         # Move object to target zone
-        y_drop = self.TARGET_ZONE_POS[2] + z_offset + obj_height
-        y_orn = p.getQuaternionFromEuler([0, np.pi/2, 0.0])
+        y_drop = self.TARGET_ZONE_POS[2] + z_offset + obj_height + 0.15
+        y_orn = p.getQuaternionFromEuler([-np.pi*0.25, np.pi/2, 0.0])
         # y_orn = np.array(p.getLinkState(self.robotID, self.eefID)[1:2][0])
 
-        # self.move_away_arm()
-        self.move_ee([self.TARGET_ZONE_POS[0], self.TARGET_ZONE_POS[1], self.GRIPPER_MOVING_HEIGHT, y_orn])
+        self.move_away_arm()
+        self.move_ee([self.TARGET_ZONE_POS[0], self.TARGET_ZONE_POS[1], 1.25, y_orn])
         self.move_ee([self.TARGET_ZONE_POS[0], self.TARGET_ZONE_POS[1], y_drop, y_orn])
         self.move_gripper(0.085)
         self.move_ee([self.TARGET_ZONE_POS[0], self.TARGET_ZONE_POS[1], self.GRIPPER_MOVING_HEIGHT, y_orn])
 
         #Wait till objct is at rest then check if it makes contact with target zone
-        self.wait_until_still(200)
-        if self.check_contact(self.target_zoneID, self.objID):
+        self.wait_until_still(100)
+        if self.check_target_reached():
             succes_target = True
 
         return succes_grasp, succes_target
