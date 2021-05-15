@@ -1,9 +1,10 @@
+from environment.utilities import Models, setup_sisbot, setup_sisbot_force, Camera
 import math
 import time
 import numpy as np
 import pybullet as p
 import pybullet_data
-from environment.utilities import Models, setup_sisbot, setup_sisbot_force, Camera
+import random
 
 
 class FailToReachTargetError(RuntimeError):
@@ -17,7 +18,7 @@ class Environment:
     TARGET_ZONE_POS = [0.7, 0.0, 0.685]
     SIMULATION_STEP_DELAY = 1 / 400.
     FINGER_LENGTH = 0.06
-    Z_TABLE = 0.785
+    Z_TABLE_TOP = 0.785
     GRIP_REDUCTION = 0.60
 
     def __init__(self, camera: Camera, vis=False, debug=False, num_objs=3, gripper_type='85') -> None:
@@ -27,6 +28,9 @@ class Environment:
         self.camera = camera
 
         self.objID = None
+        self.obj_init_pos = (camera.x, camera.y)
+        self.obj_pos = None
+        self.obj_orn = None
 
         if gripper_type not in ('85', '140'):
             raise NotImplementedError('Gripper %s not implemented.' % gripper_type)
@@ -114,27 +118,41 @@ class Environment:
             self.eef_debug_lineID = p.addUserDebugLine(np.array(eef_xyz[0]), end, [1, 0, 0])
             time.sleep(self.SIMULATION_STEP_DELAY)        
 
-    def load_object(self, path, pos, orn):
-        # load object
+    def load_isolated_obj(self, path, special_case=False):
+        r_x = random.uniform(self.obj_init_pos[0] - 0.1, self.obj_init_pos[0] + 0.1)
+        r_y = random.uniform(self.obj_init_pos[1] - 0.1, self.obj_init_pos[1] + 0.1)
+        yaw = random.uniform(0, np.pi)
+        
+        pos = [r_x, r_y, self.Z_TABLE_TOP]
+        orn = p.getQuaternionFromEuler([0, 0, yaw])        
         self.objID = p.loadURDF(path, pos, orn)
         # adjust position according to height
         aabb = p.getAABB(self.objID, -1)
-        z_min, z_max = aabb[0][2], aabb[1][2]    
-        pos[2] += (z_max - z_min) / 2 
-        p.resetBasePositionAndOrientation(self.objID, pos, orn)
+        if special_case:
+            minm, maxm = aabb[0][0], aabb[1][0]
+            orn = p.getQuaternionFromEuler([np.pi*0.5, 0, yaw])
+        else:
+            minm, maxm = aabb[0][2], aabb[1][2]    
+        
+        pos[2] += (maxm - minm) / 2 
+        p.resetBasePositionAndOrientation(self.objID, pos, orn)   
         #change dynamics
         p.changeDynamics(self.objID, -1, lateralFriction=1, restitution=0.01)
         # wait until object is at rest
         for _ in range(10):
             self.step_simulation()
         self.wait_until_still(500)
+        self.obj_pos, self.obj_orn = p.getBasePositionAndOrientation(self.objID)
 
-    def remove_object(self):
+    def remove_obj(self):
         if self.objID == None:
             print('WARNING: No object in simulation')
             return
         p.removeBody(self.objID)
         self.objID = None
+
+    def reset_obj(self):
+        p.resetBasePositionAndOrientation(self.objID, self.obj_pos, self.obj_orn)   
 
     @staticmethod
     def is_still(handle):

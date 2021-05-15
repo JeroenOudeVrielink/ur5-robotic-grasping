@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.lib.npyio import save
 import torch.utils.data
 from PIL import Image
 from datetime import datetime
@@ -86,7 +87,7 @@ class GraspGenerator:
         # return x, y, z, roll, opening length gripper
         return robot_frame_ref[0], robot_frame_ref[1], robot_frame_ref[2], roll, opening_length, obj_height
 
-    def predict(self, rgb, depth, show_output=False):
+    def predict(self, rgb, depth, n_grasps=1, show_output=False):
         depth = np.expand_dims(np.array(depth), axis=2)
         img_data = CameraData(width=224, height=224)
         x, depth_img, rgb_img = img_data.get_data(rgb=rgb, depth=depth)
@@ -100,17 +101,27 @@ class GraspGenerator:
                                                             pred['sin'], 
                                                             pred['width'], 
                                                             pixels_max_grasp)
+            save_name = None
             if show_output:
                 fig = plt.figure(figsize=(10, 10))
                 plot_results(fig=fig,
-                                rgb_img=img_data.get_rgb(rgb, False),
-                                grasp_q_img=q_img,
-                                grasp_angle_img=ang_img,
-                                no_grasps=3,
-                                grasp_width_img=width_img)
+                            rgb_img=img_data.get_rgb(rgb, False),
+                            grasp_q_img=q_img,
+                            grasp_angle_img=ang_img,
+                            no_grasps=3,
+                            grasp_width_img=width_img)
                 time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 save_name = 'network_output/{}'.format(time)
                 fig.savefig(save_name + '.png')
             
             grasps = detect_grasps(q_img, ang_img, width_img=width_img, no_grasps=3)  
-            return self.grasp_to_robot_frame(grasps[0], depth), save_name
+            return grasps, save_name
+
+    def predict_grasp(self, rgb, depth, n_grasps=1, show_output=False):
+        predictions, save_name = self.predict(rgb, depth, n_grasps=n_grasps, show_output=show_output)
+        grasps = []
+        for grasp in predictions:
+            x, y, z, roll, opening_len, obj_height = self.grasp_to_robot_frame(grasp, depth)
+            grasps.append((x, y, z, roll, opening_len, obj_height)) 
+
+        return grasps, save_name  

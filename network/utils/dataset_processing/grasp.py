@@ -431,7 +431,9 @@ def detect_grasps(q_img, ang_img, width_img=None, no_grasps=1):
     :param no_grasps: Max number of grasps to return
     :return: list of Grasps
     """
-    local_max = peak_local_max(q_img, min_distance=10, threshold_abs=0.02, num_peaks=no_grasps)
+    
+    #Origional min distance=10, threshold abs=0.02
+    local_max = peak_local_max(q_img, min_distance=1, threshold_abs=0.6, num_peaks=no_grasps)
 
     grasps = []
     for grasp_point_array in local_max:

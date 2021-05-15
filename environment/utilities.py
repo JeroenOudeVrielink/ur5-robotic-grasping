@@ -1,63 +1,7 @@
 import pybullet as p
-import glob
 from collections import namedtuple
 from attrdict import AttrDict
 import functools
-import torch
-import cv2
-from scipy import ndimage
-import numpy as np
-
-
-class Models:
-    def load_objects(self):
-        raise NotImplementedError
-
-    def __len__(self):
-        raise NotImplementedError
-
-    def __getitem__(self, item):
-        return NotImplementedError
-
-
-class YCBModels(Models):
-    def __init__(self, root, selected_names: tuple = ()):
-        self.obj_files = glob.glob(root)
-        self.selected_names = selected_names
-
-        self.visual_shapes = []
-        self.collision_shapes = []
-
-    def load_objects(self):
-        shift = [0, 0, 0]
-        mesh_scale = [1, 1, 1]
-
-        for filename in self.obj_files:
-            # Check selected_names
-            if self.selected_names:
-                in_selected = False
-                for name in self.selected_names:
-                    if name in filename:
-                        in_selected = True
-                if not in_selected:
-                    continue
-            print('Loading %s' % filename)
-            self.collision_shapes.append(
-                p.createCollisionShape(shapeType=p.GEOM_MESH,
-                                       fileName=filename,
-                                       collisionFramePosition=shift,
-                                       meshScale=mesh_scale))
-            self.visual_shapes.append(
-                p.createVisualShape(shapeType=p.GEOM_MESH,
-                                    fileName=filename,
-                                    visualFramePosition=shift,
-                                    meshScale=mesh_scale))
-
-    def __len__(self):
-        return len(self.collision_shapes)
-
-    def __getitem__(self, idx):
-        return self.visual_shapes[idx], self.collision_shapes[idx]
 
 
 def setup_sisbot(p, robotID, gripper_type):

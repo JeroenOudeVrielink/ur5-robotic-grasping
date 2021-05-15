@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class YcbObjects:
 
-    def __init__(self, load_path, save_path, trials):
+    def __init__(self, load_path, save_path, trials, special_cases=None):
         self.load_path = load_path
         with open(load_path + '/obj_list.txt') as f:
             lines = f.readlines()
@@ -18,6 +18,7 @@ class YcbObjects:
         self.save_dir = f'{save_path}/{now}'
         os.mkdir(self.save_dir)
         self.trials = trials
+        self.special_cases = special_cases
             
     def shuffle_objects(self):
         random.shuffle(self.obj_names)
