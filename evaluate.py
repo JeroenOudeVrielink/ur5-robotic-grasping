@@ -1,7 +1,7 @@
 from grasp_generator import GraspGenerator
 from environment.utilities import Camera
 from environment.env import Environment
-from objects.objects_wrapper import YcbObjects
+from utils import YcbObjects, summarize
 import pybullet as p
 import numpy as np
 import sys
@@ -26,13 +26,13 @@ def setup(vis, debug):
 
 def isolated_obj_scenario(n):
     vis = False
-    output = False
+    output = True
     debug = False
 
-    objects = YcbObjects('objects/ycb_objects', 'results', n, ['ChipsCan', 'TomatoSoupCan'])
+    objects = YcbObjects('objects/ycb_objects', 'results', n)
     camera, env, generator = setup(vis, debug)
 
-    # objects.obj_names = ['Strawberry']
+    objects.obj_names = ['MustardBottle']
 
     for obj_name in objects.obj_names:
         print(obj_name)       
@@ -43,9 +43,8 @@ def isolated_obj_scenario(n):
             
             rgb, depth, _ = camera.get_cam_img()
             grasps, save_name = generator.predict_grasp(rgb, depth, n_grasps=3, show_output=output)
-            
-            grasped = False
             for grasp in grasps:
+                objects.add_try(obj_name)
                 x, y, z, roll, opening_len, obj_height = grasp
                 # print(f'x:{x} y:{y}, z:{z}, roll:{roll}, opening len:{opening_len}, obj height:{obj_height}')
                 if vis:
@@ -55,9 +54,8 @@ def isolated_obj_scenario(n):
                 # print(f'Grasped:{succes_grasp} Target:{succes_target}')                
                 if vis:
                     p.removeUserDebugItem(debugID)              
-                if not grasped and succes_grasp:
+                if succes_grasp:
                     objects.add_succes_grasp(obj_name)
-                    grasped = True
                 if succes_target:
                     objects.add_succes_target(obj_name)
                     if save_name is not None:
@@ -66,7 +64,8 @@ def isolated_obj_scenario(n):
                 env.reset_obj()
             env.remove_obj()
 
-    objects.summarize_results()
+    objects.write_json()
+    summarize(objects.save_dir, n)
 
 if __name__ == '__main__':
-    isolated_obj_scenario(20)
+    isolated_obj_scenario(10)

@@ -1,5 +1,4 @@
 import logging
-
 import torch
 
 logging.basicConfig(level=logging.INFO)

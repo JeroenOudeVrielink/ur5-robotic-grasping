@@ -1,4 +1,4 @@
-from environment.utilities import Models, setup_sisbot, setup_sisbot_force, Camera
+from environment.utilities import setup_sisbot, Camera
 import math
 import time
 import numpy as np
@@ -360,7 +360,7 @@ class Environment:
         self.move_ee([self.camera.x, self.camera.y, self.GRIPPER_MOVING_HEIGHT, orn])
 
         # If the object has been grasped and lifted off the table
-        if self.check_grasped() and not self.check_contact(self.tableID, self.objID):
+        if self.check_grasped():
             succes_grasp = True
 
         # Move object to target zone
