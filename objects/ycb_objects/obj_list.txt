@@ -1,7 +1,6 @@
 Banana
 ChipsCan
 CrackerBox
-FoamBrick
 GelatinBox
 Hammer
 MasterChefCan

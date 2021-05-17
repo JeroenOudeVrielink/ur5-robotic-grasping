@@ -29,16 +29,17 @@ def isolated_obj_scenario(n):
     output = True
     debug = False
 
-    objects = YcbObjects('objects/ycb_objects', 'results', n)
+    objects = YcbObjects('objects/ycb_objects', 'results', n, ['ChipsCan', 'MustardBottle', 'TomatoSoupCan'])
     camera, env, generator = setup(vis, debug)
 
-    objects.obj_names = ['MustardBottle']
+    # objects.obj_names = ['MustardBottle', 'ChipsCan', 'TomatoSoupCan']
 
     for obj_name in objects.obj_names:
         print(obj_name)       
         for _ in range(n):
 
-            env.load_isolated_obj(objects.get_obj_path(obj_name), False)
+            special_case = objects.check_special_case(obj_name)
+            env.load_isolated_obj(objects.get_obj_path(obj_name), special_case)
             env.move_away_arm()
             
             rgb, depth, _ = camera.get_cam_img()
@@ -68,4 +69,4 @@ def isolated_obj_scenario(n):
     summarize(objects.save_dir, n)
 
 if __name__ == '__main__':
-    isolated_obj_scenario(10)
+    isolated_obj_scenario(20)

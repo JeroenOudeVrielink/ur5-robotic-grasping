@@ -20,6 +20,7 @@ class YcbObjects:
         self.tries = dict.fromkeys(self.obj_names, 0)
         self.special_cases = special_cases
         
+        # @TODO add folder results if not exising
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         self.save_dir = f'{save_path}/{now}'
         os.mkdir(self.save_dir)
@@ -38,6 +39,11 @@ class YcbObjects:
 
     def add_try(self, obj_name):
         self.tries[obj_name] += 1
+
+    def check_special_case(self, obj_name):
+        if obj_name in self.special_cases:
+            return True
+        return False
 
     def print_succes(self):
         print("Successes per object:")
@@ -69,8 +75,11 @@ class YcbObjects:
 def plot(path, tries, target, grasp, trials):
     succes_rate = dict.fromkeys(tries.keys())
     for obj in succes_rate.keys():
-        acc_target = target[obj] / tries[obj]
-        acc_grasp = grasp[obj] / tries[obj]
+        t = tries[obj]
+        if t == 0:
+            t =1
+        acc_target = target[obj] / t
+        acc_grasp = grasp[obj] / t
         succes_rate[obj] = (acc_target, acc_grasp)
     df = pd.DataFrame(succes_rate).T
     df.columns = ['Target', 'Grasped']
@@ -113,5 +122,5 @@ def summarize(path, trials):
 
 
 if __name__=='__main__':
-    path = 'results/isolated_obj_percentages_15-5'
+    path = 'results/2021-05-17 10:06:47'
     summarize(path, trials=20)

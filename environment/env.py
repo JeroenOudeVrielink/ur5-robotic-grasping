@@ -129,8 +129,8 @@ class Environment:
         # adjust position according to height
         aabb = p.getAABB(self.objID, -1)
         if special_case:
-            minm, maxm = aabb[0][0], aabb[1][0]
-            orn = p.getQuaternionFromEuler([np.pi*0.5, 0, yaw])
+            minm, maxm = aabb[0][1], aabb[1][1]
+            orn = p.getQuaternionFromEuler([0, np.pi*0.5, yaw])
         else:
             minm, maxm = aabb[0][2], aabb[1][2]    
         

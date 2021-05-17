@@ -89,7 +89,7 @@ class GraspGenerator:
 
     def predict(self, rgb, depth, n_grasps=1, show_output=False):
         depth = np.expand_dims(np.array(depth), axis=2)
-        img_data = CameraData(width=224, height=224)
+        img_data = CameraData(width=self.IMG_WIDTH, height=self.IMG_WIDTH)
         x, depth_img, rgb_img = img_data.get_data(rgb=rgb, depth=depth)
 
         with torch.no_grad():
@@ -110,6 +110,7 @@ class GraspGenerator:
                             grasp_angle_img=ang_img,
                             no_grasps=3,
                             grasp_width_img=width_img)
+                # @TODO add folder network output if not existing
                 time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 save_name = 'network_output/{}'.format(time)
                 fig.savefig(save_name + '.png')
