@@ -1,5 +1,5 @@
-<robot name="block">
-  <link name="block">
+<robot name="slab">
+  <link name="slab">
 
     <inertial>
       <origin xyz="0 0 0" />
@@ -10,19 +10,18 @@
     <visual>
       <origin xyz="0 0 0"/>
       <geometry>
-        <box size="0.001 0.001 0.05" />
+        <box size="0.02 0.4 0.2" />
       </geometry>
-      <material name="black">
-        <color rgba="0 0 0 1.0"/>
+      <material name="white">
+        <color rgba="1.0 1.0 1.0 1.0"/>
       </material>
     </visual>
 
     <collision>
       <origin xyz="0 0 0"/>
       <geometry>
-        <box size="0.005 0.005 0.05" />
+        <box size="0.02 0.3 0.2" />
       </geometry>
     </collision>
-
   </link>
 </robot>
