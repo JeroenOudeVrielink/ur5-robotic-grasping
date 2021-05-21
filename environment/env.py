@@ -21,17 +21,13 @@ class Environment:
     Z_TABLE_TOP = 0.785
     GRIP_REDUCTION = 0.60
 
-    def __init__(self, camera: Camera, vis=False, debug=False, num_objs=3, gripper_type='85', finger_length=0.06) -> None:
+    def __init__(self, camera: Camera, vis=False, debug=False, gripper_type='140', finger_length=0.06) -> None:
         self.vis = vis
         self.debug = debug
-        self.num_objs = num_objs
         self.camera = camera
 
         self.obj_init_pos = (camera.x, camera.y)
-        self.obj_id = None
         self.obj_ids = []
-        self.obj_pos = None
-        self.obj_orn = None
         self.obj_positions = []
         self.obj_orientations = []
 
@@ -116,22 +112,7 @@ class Environment:
             end = np.array(eef_xyz[0])
             end[2] -= 0.5
             self.eef_debug_lineID = p.addUserDebugLine(np.array(eef_xyz[0]), end, [1, 0, 0])
-            # time.sleep(self.SIMULATION_STEP_DELAY)        
-
-    def remove_obj(self):
-        if self.obj_id == None:
-            print('WARNING: No object in simulation')
-            return
-        p.removeBody(self.obj_id)
-        self.obj_id = None
-
-    def reset_obj(self):
-        p.resetBasePositionAndOrientation(self.obj_id, self.obj_pos, self.obj_orn)
-
-    def reset_all_obj(self):
-        for i, obj_id in enumerate(self.obj_ids):
-            p.resetBasePositionAndOrientation(obj_id, self.obj_positions[i], self.obj_orientations[i])
-        self.wait_until_all_still()      
+            # time.sleep(self.SIMULATION_STEP_DELAY)            
 
     @staticmethod
     def is_still(handle):
@@ -211,7 +192,8 @@ class Environment:
         contact_right = p.getContactPoints(bodyA=self.robot_id, linkIndexA=right_index)
         contact_ids = set(item[2] for item in contact_left + contact_right if item[2] in self.obj_ids)
         if len(contact_ids) > 1:
-            print('Warning: Multiple items in hand!')
+            if self.debug:
+                print('Warning: Multiple items in hand!')
         return list(item_id for item_id in contact_ids if item_id in self.obj_ids)
 
     def check_contact(self, id_a, id_b):
@@ -283,16 +265,37 @@ class Environment:
             gripper_length = 1.231 - 1.1
         return gripper_length
 
-    def load_isolated_obj(self, path, special_case=False):
-        r_x = random.uniform(self.obj_init_pos[0] - 0.1, self.obj_init_pos[0] + 0.1)
-        r_y = random.uniform(self.obj_init_pos[1] - 0.1, self.obj_init_pos[1] + 0.1)
-        yaw = random.uniform(0, np.pi)
-        
-        pos = [r_x, r_y, self.Z_TABLE_TOP]
-        orn = p.getQuaternionFromEuler([0, 0, yaw])        
-        self.obj_id = p.loadURDF(path, pos, orn)
+    def remove_obj(self, obj_id):
+        # Get index of obj in id list, then remove object from simulation
+        idx = self.obj_ids.index(obj_id)
+        self.obj_orientations.pop(idx)
+        self.obj_positions.pop(idx)
+        self.obj_ids.pop(idx)
+        p.removeBody(obj_id)
+
+    def remove_all_obj(self):
+        self.obj_positions.clear()
+        self.obj_orientations.clear()
+        for obj_id in self.obj_ids:
+            p.removeBody(obj_id)
+        self.obj_ids.clear()
+
+    def reset_all_obj(self):
+        for i, obj_id in enumerate(self.obj_ids):
+            p.resetBasePositionAndOrientation(obj_id, self.obj_positions[i], self.obj_orientations[i])
+        self.wait_until_all_still()
+
+    def update_obj_states(self):
+        for i, obj_id in enumerate(self.obj_ids):
+            pos, orn = p.getBasePositionAndOrientation(obj_id)
+            self.obj_positions[i] = pos
+            self.obj_orientations[i] = orn  
+
+    def load_obj(self, path, pos, yaw, special_case=False):
+        orn = p.getQuaternionFromEuler([0, 0, yaw])
+        obj_id = p.loadURDF(path, pos, orn)
         # adjust position according to height
-        aabb = p.getAABB(self.obj_id, -1)
+        aabb = p.getAABB(obj_id, -1)
         if special_case:
             minm, maxm = aabb[0][1], aabb[1][1]
             orn = p.getQuaternionFromEuler([0, np.pi*0.5, yaw])
@@ -300,14 +303,26 @@ class Environment:
             minm, maxm = aabb[0][2], aabb[1][2]    
         
         pos[2] += (maxm - minm) / 2 
-        p.resetBasePositionAndOrientation(self.obj_id, pos, orn)   
+        p.resetBasePositionAndOrientation(obj_id, pos, orn)
         #change dynamics
-        p.changeDynamics(self.obj_id, -1, lateralFriction=1, restitution=0.01)
-        # wait until object is at rest
+        p.changeDynamics(obj_id, -1, lateralFriction=1, restitution=0.01)
+        
+        self.obj_ids.append(obj_id)
+        self.obj_positions.append(pos)
+        self.obj_orientations.append(pos)
+        return obj_id, pos, orn
+
+    def load_isolated_obj(self, path, special_case=False):
+        r_x = random.uniform(self.obj_init_pos[0] - 0.1, self.obj_init_pos[0] + 0.1)
+        r_y = random.uniform(self.obj_init_pos[1] - 0.1, self.obj_init_pos[1] + 0.1)
+        yaw = random.uniform(0, np.pi)
+
+        pos = [r_x, r_y, self.Z_TABLE_TOP]
+        obj_id, _, _ = self.load_obj(path, pos, yaw, special_case)
         for _ in range(10):
             self.step_simulation()
-        self.wait_until_still(self.obj_id)
-        self.obj_pos, self.obj_orn = p.getBasePositionAndOrientation(self.obj_id)
+        self.wait_until_still(obj_id)
+        self.update_obj_states()
 
     def create_temp_box(self):
         box_size = 0.35
@@ -358,6 +373,64 @@ class Environment:
             obj_pos, obj_orn = p.getBasePositionAndOrientation(obj_id)
             self.obj_positions.append(obj_pos)
             self.obj_orientations.append(obj_orn)
+
+    def move_obj_along_axis(self, obj_id, axis, operator, step, stop):
+        collison = False
+        while not collison:
+            pos, orn = p.getBasePositionAndOrientation(obj_id)
+            new_pos = list(pos)
+            if operator == '+':
+                new_pos[axis] += step
+                if new_pos[axis] > stop:
+                    break
+            else:
+                new_pos[axis] -= step
+                if new_pos[axis] < stop:
+                    break
+            # Move object towards center
+            p.resetBasePositionAndOrientation(obj_id, new_pos, orn)
+            p.stepSimulation()
+            contact_a = p.getContactPoints(obj_id)
+            # If object collides with any other object, stop
+            contact_ids = set(item[2] for item in contact_a if item[2] in self.obj_ids)
+            if len(contact_ids) != 0:
+                collison = True
+        # Move one step back
+        pos, orn = p.getBasePositionAndOrientation(obj_id)
+        new_pos = list(pos)
+        if operator == '+':
+            new_pos[axis] -= step
+        else:
+            new_pos[axis] += step
+        p.resetBasePositionAndOrientation(obj_id, new_pos, orn)
+    
+    def create_packed(self, obj_info):
+        init_x, init_y, init_z = self.obj_init_pos[0], self.obj_init_pos[1], self.Z_TABLE_TOP
+        yaw = random.uniform(0, np.pi)
+        path, special_case = obj_info[0]
+        center_obj, _, _ = self.load_obj(path, [init_x, init_y, init_z], yaw, special_case)
+
+        margin = 0.3
+        yaw = random.uniform(0, np.pi)
+        path, special_case = obj_info[1]
+        left_obj_id, _, _ = self.load_obj(path, [init_x-margin, init_y, init_z], yaw, special_case)    
+        yaw = random.uniform(0, np.pi)
+        path, special_case = obj_info[2]
+        top_obj_id, _, _ = self.load_obj(path, [init_x, init_y+margin, init_z], yaw, special_case)    
+        yaw = random.uniform(0, np.pi)
+        path, special_case = obj_info[3]
+        right_obj_id, _, _ = self.load_obj(path, [init_x+margin, init_y, init_z], yaw, special_case)       
+        yaw = random.uniform(0, np.pi)
+        path, special_case = obj_info[4]
+        down_obj_id, _, _ = self.load_obj(path, [init_x, init_y-margin, init_z], yaw, special_case) 
+        
+        self.wait_until_all_still()
+        step = 0.01
+        self.move_obj_along_axis(left_obj_id, 0, '+', step, init_x)
+        self.move_obj_along_axis(top_obj_id, 1, '-', step, init_y)
+        self.move_obj_along_axis(right_obj_id, 0, '-', step, init_x)
+        self.move_obj_along_axis(down_obj_id, 1, '+', step, init_y)
+        self.update_obj_states()
 
     def move_ee(self, action, max_step=300, check_collision_config=None, custom_velocity=None,
                 try_close_gripper=False, verbose=False):
@@ -412,7 +485,7 @@ class Environment:
         roll: float,   for grasp, it should be in [-pi/2, pi/2)
         """
         succes_grasp, succes_target = False, False
-        obj_id = None        
+        grasped_obj_id = None        
         
         x, y, z = pos
         # Substracht gripper finger length from z
@@ -433,15 +506,15 @@ class Environment:
         self.move_ee([x, y, z + z_offset, orn])
         # self.move_gripper(gripper_opening_length)
         self.auto_close_gripper(check_contact=True)
-        for _ in range(10):
+        for _ in range(15):
             self.step_simulation()
-        self.move_ee([self.camera.x, self.camera.y, self.GRIPPER_MOVING_HEIGHT, orn])
+        self.move_ee([x, y, self.GRIPPER_MOVING_HEIGHT, orn])
 
         # If the object has been grasped and lifted off the table
         grasped_id = self.check_grasped_id()
         if len(grasped_id) == 1:
             succes_grasp = True
-            obj_id = grasped_id[0]
+            grasped_obj_id = grasped_id[0]
         else:
             return succes_target, succes_grasp
 
@@ -459,13 +532,9 @@ class Environment:
         #Wait then check if object is in target zone
         for _ in range(50):
             self.step_simulation()
-        if self.check_target_reached(obj_id):
+        if self.check_target_reached(grasped_obj_id):
             succes_target = True
-            idx = self.obj_ids.index(obj_id)
-            self.obj_orientations.pop(idx)
-            self.obj_positions.pop(idx)
-            self.obj_ids.pop(idx)
-            p.removeBody(obj_id)
+            self.remove_obj(grasped_obj_id)
 
         return succes_grasp, succes_target
 

@@ -8,28 +8,86 @@ from matplotlib.ticker import FuncFormatter
 
 
 class YcbObjects:
-
-    def __init__(self, load_path, save_path, trials ,special_cases=None):
+    def __init__(self, load_path, special_cases=None):
         self.load_path = load_path
-        self.trials = trials
+        self.special_cases = special_cases
         with open(load_path + '/obj_list.txt') as f:
             lines = f.readlines()
             self.obj_names = [line.rstrip('\n') for line in lines]
-        self.succes_target = dict.fromkeys(self.obj_names, 0)
-        self.succes_grasp = dict.fromkeys(self.obj_names, 0)
-        self.tries = dict.fromkeys(self.obj_names, 0)
-        self.special_cases = special_cases
         
-        # @TODO add folder results if not exising
-        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        self.save_dir = f'{save_path}/{now}'
-        os.mkdir(self.save_dir)
-
     def shuffle_objects(self):
         random.shuffle(self.obj_names)
     
     def get_obj_path(self, obj_name):
         return f'{self.load_path}/Ycb{obj_name}/model.urdf'
+
+    def check_special_case(self, obj_name):
+        if obj_name in self.special_cases:
+            return True
+        return False
+
+    def get_obj_info(self, obj_name):
+        return self.get_obj_path(obj_name), self.check_special_case(obj_name)
+
+    def get_n_first_obj_info(self, n):
+        info = []
+        for obj_name in self.obj_names[:n]:
+            info.append(self.get_obj_info(obj_name))
+        return info
+
+
+class PackPileData:
+
+    def __init__(self, num_obj, trials, save_path, scenario):
+        self.num_obj = num_obj
+        self.trials = trials
+        self.save_path = save_path
+        
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.save_dir = f'{save_path}/{now}_{scenario}'
+        os.mkdir(self.save_dir)
+
+        self.tries = 0
+        self.succes_grasp = 0
+        self.succes_target = 0
+
+    def add_try(self):
+        self.tries += 1
+
+    def add_succes_target(self):
+        self.succes_target += 1
+
+    def add_succes_grasp(self):
+        self.succes_grasp += 1
+
+    def summarize(self):
+        grasp_acc = self.succes_grasp / self.tries
+        target_acc = self.succes_target / self.tries
+        perc_obj_cleared = self.succes_target / (self.trials * self.num_obj)
+
+        with open(f'{self.save_dir}/summary.txt', 'w') as f:
+            f.write(f'Stats for {self.num_obj} objects out of {self.trials} trials\n')
+            f.write(f'Target acc={target_acc:.3f} ({self.succes_target}/{self.tries})\n')
+            f.write(f'Grasp acc={grasp_acc:.3f} ({self.succes_grasp}/{self.tries})\n')
+            f.write(f'Percentage objects cleared={perc_obj_cleared} ({self.succes_target}/{(self.trials * self.num_obj)})\n')
+
+
+class IsolatedObjData:
+
+    def __init__(self, obj_names, trials, save_path):
+        self.obj_names = obj_names
+        self.trials
+        self.succes_target = dict.fromkeys(obj_names, 0)
+        self.succes_grasp = dict.fromkeys(obj_names, 0)
+        self.tries = dict.fromkeys(obj_names, 0)
+        
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        self.save_dir = f'{save_path}/{now}_iso_obj'
+        os.mkdir(self.save_dir)
 
     def add_succes_target(self, obj_name):
         self.succes_target[obj_name] += 1
@@ -39,24 +97,6 @@ class YcbObjects:
 
     def add_try(self, obj_name):
         self.tries[obj_name] += 1
-
-    def check_special_case(self, obj_name):
-        if obj_name in self.special_cases:
-            return True
-        return False
-
-    def print_succes(self):
-        print("Successes per object:")
-        for obj in self.obj_names:
-            tries = self.tries[obj]
-            target = self.succes_target[obj]
-            grasp = self.succes_grasp[obj]
-            print(f'{obj}: Target acc={target/tries} ({target}/{tries}) Grasp acc={grasp/tries} ({grasp}/{tries})')
-        total_tries = sum(self.tries.values())
-        total_target = sum(self.succes_target.values())
-        total_grasp = sum(self.succes_grasp.values())
-        print('Total:')
-        print(f'Target acc={total_target/total_tries} ({total_target}/{total_tries}) Grasp acc={total_grasp/total_tries} ({total_grasp}/{total_tries})')
 
     def write_json(self):
         data_tries = json.dumps(self.tries)
@@ -71,6 +111,7 @@ class YcbObjects:
         f = open(self.save_dir+'/data_grasp.json', 'w')
         f.write(data_grasp)
         f.close()
+
 
 def plot(path, tries, target, grasp, trials):
     succes_rate = dict.fromkeys(tries.keys())
@@ -123,4 +164,9 @@ def summarize(path, trials):
 
 if __name__=='__main__':
     path = 'results/2021-05-17 10:06:47'
-    summarize(path, trials=20)
+    # summarize(path, trials=20)
+    data = PackPileData(5, 5, 'test', 'pack')
+    data.add_try()
+    data.add_try()
+    data.add_try()
+    data.summarize()
