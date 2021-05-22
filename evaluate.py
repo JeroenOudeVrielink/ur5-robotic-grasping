@@ -10,10 +10,7 @@ import time
 import random
 sys.path.append('network')
 
-def isolated_obj_scenario(n):
-    vis = True
-    output = True
-    debug = True
+def isolated_obj_scenario(n, vis, output, debug):
 
     objects = YcbObjects('objects/ycb_objects', ['ChipsCan', 'MustardBottle', 'TomatoSoupCan'])
     data = IsolatedObjData(objects.obj_names, n, 'results')
@@ -23,8 +20,6 @@ def isolated_obj_scenario(n):
     camera = Camera((center_x, center_y, 1.9), (center_x, center_y, 0.785), 0.2, 2.0, (224, 224), 40)
     env = Environment(camera, vis=vis, debug=debug)
     generator = GraspGenerator(network_path, camera, 5)
-
-    # objects.obj_names = ['MustardBottle', 'ChipsCan', 'TomatoSoupCan']
 
     for obj_name in objects.obj_names:
         print(obj_name)       
@@ -60,26 +55,26 @@ def isolated_obj_scenario(n):
     data.write_json()
     summarize(data.save_dir, n)
 
-def pile_scenario(n):
-    vis = True
-    output = True
-    debug = False
+def pile_scenario(n, vis, output, debug):
 
-    data = PackPileData(5, n, 'results', 'pack')
-    objects = YcbObjects('objects/ycb_objects', ['ChipsCan', 'MustardBottle', 'TomatoSoupCan'])
+    data = PackPileData(5, n, 'results', 'pile')
+    objects = YcbObjects('objects/ycb_objects', 
+                        special_cases=['ChipsCan', 'MustardBottle', 'TomatoSoupCan'], 
+                        exclude=['CrackerBox', 'Hammer'])
     center_x, center_y = 0.05, -0.52
     network_path = 'network/trained-models/cornell-randsplit-rgbd-grconvnet3-drop1-ch32/epoch_19_iou_0.98'
     camera = Camera((center_x, center_y, 1.9), (center_x, center_y, 0.785), 0.2, 2.0, (224, 224), 40)
     env = Environment(camera, vis=vis, debug=debug, finger_length=0.06)
     generator = GraspGenerator(network_path, camera, 5)
 
-
     for i in range(n):
         print(f'Trial {i}')
         straight_fails = 0
         objects.shuffle_objects()
+
+        env.move_away_arm()
         info = objects.get_n_first_obj_info(5)
-        env.create_packed(info)    
+        env.create_pile(info)    
 
         straight_fails = 0
         while len(env.obj_ids) != 0 and straight_fails < 3:
@@ -173,5 +168,5 @@ def packed_scenario(n):
 
 
 if __name__ == '__main__':
-    # isolated_obj_scenario(1)
-    packed_scenario(50)
+    isolated_obj_scenario(50, vis=False, output=False, debug=False)
+    # pile_scenario(50, vis=True, output=True, debug=False)

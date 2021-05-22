@@ -8,12 +8,15 @@ from matplotlib.ticker import FuncFormatter
 
 
 class YcbObjects:
-    def __init__(self, load_path, special_cases=None):
+    def __init__(self, load_path, special_cases=None, exclude=None):
         self.load_path = load_path
         self.special_cases = special_cases
         with open(load_path + '/obj_list.txt') as f:
             lines = f.readlines()
             self.obj_names = [line.rstrip('\n') for line in lines]
+        if exclude is not None:
+            for obj_name in exclude:
+                self.obj_names.remove(obj_name)
         
     def shuffle_objects(self):
         random.shuffle(self.obj_names)
@@ -78,7 +81,7 @@ class IsolatedObjData:
 
     def __init__(self, obj_names, trials, save_path):
         self.obj_names = obj_names
-        self.trials
+        self.trials = trials
         self.succes_target = dict.fromkeys(obj_names, 0)
         self.succes_grasp = dict.fromkeys(obj_names, 0)
         self.tries = dict.fromkeys(obj_names, 0)

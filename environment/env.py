@@ -305,11 +305,25 @@ class Environment:
         pos[2] += (maxm - minm) / 2 
         p.resetBasePositionAndOrientation(obj_id, pos, orn)
         #change dynamics
-        p.changeDynamics(obj_id, -1, lateralFriction=1, restitution=0.01)
-        
+        # p.changeDynamics(obj_id, -1, lateralFriction=1, restitution=0.01, contactStiffness=100, contactDamping=0)
+        # p.changeDynamics(obj_id, 
+        #                 -1, lateralFriction=1, 
+        #                 rollingFriction=0.001, 
+        #                 spinningFriction=0.001,
+        #                 restitution=0.01, 
+        #                 contactStiffness=100000, 
+        #                 contactDamping=0.0)        
+        p.changeDynamics(obj_id, 
+                        -1, lateralFriction=1, 
+                        rollingFriction=0.001, 
+                        spinningFriction=0.001,
+                        restitution=0.01)
+        # p.changeDynamics(obj_id, 
+        #                 -1, lateralFriction=1, 
+        #                 restitution=0.01)
         self.obj_ids.append(obj_id)
         self.obj_positions.append(pos)
-        self.obj_orientations.append(pos)
+        self.obj_orientations.append(orn)
         return obj_id, pos, orn
 
     def load_isolated_obj(self, path, special_case=False):
@@ -324,55 +338,98 @@ class Environment:
         self.wait_until_still(obj_id)
         self.update_obj_states()
 
-    def create_temp_box(self):
-        box_size = 0.35
+    def create_temp_box(self, width, num):
+        box_width = width
         box_height = 0.2
         box_z = self.Z_TABLE_TOP + (box_height/2)
-        id1 = p.loadURDF('environment/urdf/objects/slab.urdf',
-                                [self.obj_init_pos[0] - box_size/2, self.obj_init_pos[1], box_z],
+        id1 = p.loadURDF(f'environment/urdf/objects/slab{num}.urdf',
+                                [self.obj_init_pos[0] - box_width/2, self.obj_init_pos[1], box_z],
                                 p.getQuaternionFromEuler([0, 0, 0]),
                                 useFixedBase=True)
-        id2 = p.loadURDF('environment/urdf/objects/slab.urdf',
-                                [self.obj_init_pos[0] + box_size/2, self.obj_init_pos[1], box_z],
+        id2 = p.loadURDF(f'environment/urdf/objects/slab{num}.urdf',
+                                [self.obj_init_pos[0] + box_width/2, self.obj_init_pos[1], box_z],
                                 p.getQuaternionFromEuler([0, 0, 0]),
                                 useFixedBase=True)
-        id3 = p.loadURDF('environment/urdf/objects/slab.urdf',
-                                [self.obj_init_pos[0], self.obj_init_pos[1] + box_size/2, box_z],
+        id3 = p.loadURDF(f'environment/urdf/objects/slab{num}.urdf',
+                                [self.obj_init_pos[0], self.obj_init_pos[1] + box_width/2, box_z],
                                 p.getQuaternionFromEuler([0, 0, np.pi*0.5]),
                                 useFixedBase=True)
-        id4 = p.loadURDF('environment/urdf/objects/slab.urdf',
-                                [self.obj_init_pos[0] , self.obj_init_pos[1] - box_size/2, box_z],
+        id4 = p.loadURDF(f'environment/urdf/objects/slab{num}.urdf',
+                                [self.obj_init_pos[0] , self.obj_init_pos[1] - box_width/2, box_z],
                                 p.getQuaternionFromEuler([0, 0, np.pi*0.5]),
                                 useFixedBase=True)
         return [id1, id2, id3, id4]
 
-    def create_pile(self, objects):
-        box_ids = self.create_temp_box()
-        for obj_path in objects:
+    def create_pile(self, obj_info):
+        box_ids = self.create_temp_box(0.30, 1)
+        for path, special_case in obj_info:
+            margin = 0.025
+            r_x = random.uniform(self.obj_init_pos[0] - margin, self.obj_init_pos[0] + margin)
+            r_y = random.uniform(self.obj_init_pos[1] - margin, self.obj_init_pos[1] + margin)
             yaw = random.uniform(0, np.pi)
-            roll = random.uniform(0, np.pi)
-            # roll = 0
+            pos = [r_x, r_y, 1.0]
+            # pos = [self.obj_init_pos[0], self.obj_init_pos[1], 1.0]
+            # yaw = random.uniform(0, np.pi)
 
-            pos = [self.obj_init_pos[0], self.obj_init_pos[1], 1.0]
-            orn = p.getQuaternionFromEuler([roll, 0, yaw])        
-            objID = p.loadURDF(obj_path, pos, orn)
-            self.obj_ids.append(objID)
-            p.changeDynamics(objID, -1, lateralFriction=1, restitution=0.01)
+            obj_id, _, _ = self.load_obj(path, pos, yaw, special_case)       
             for _ in range(10):
                 self.step_simulation()
-            self.wait_until_still(objID, 150)
+            self.wait_until_still(obj_id, 150)
         
         self.wait_until_all_still()
         for handle in box_ids:
             p.removeBody(handle)
+        box_ids = self.create_temp_box(0.45, 2)
         self.wait_until_all_still()
+        for handle in box_ids:
+            p.removeBody(handle)
+        self.wait_until_all_still()
+        self.update_obj_states()
+
+    def create_pile2(self, obj_info):
+        box_ids = self.create_temp_box(0.3, 1)
         
-        self.obj_positions = []
-        self.obj_orientations = []
-        for obj_id in self.obj_ids:
-            obj_pos, obj_orn = p.getBasePositionAndOrientation(obj_id)
-            self.obj_positions.append(obj_pos)
-            self.obj_orientations.append(obj_orn)
+        margin = 0.05
+        pos = [self.obj_init_pos[0]-margin, self.obj_init_pos[1], 1.0]
+        yaw = random.uniform(0, np.pi)
+        path, special_case = obj_info[0]
+        obj_id, _, _ = self.load_obj(path, pos, yaw, special_case)       
+        for _ in range(10):
+            self.step_simulation()
+        self.wait_until_still(obj_id, 150)
+        
+        pos = [self.obj_init_pos[0]+margin, self.obj_init_pos[1], 1.0]
+        yaw = random.uniform(0, np.pi)
+        path, special_case = obj_info[1]
+        obj_id, _, _ = self.load_obj(path, pos, yaw, special_case)       
+        for _ in range(10):
+            self.step_simulation()
+        self.wait_until_still(obj_id, 150)
+        
+        pos = [self.obj_init_pos[0], self.obj_init_pos[1]-margin, 1.0]
+        yaw = random.uniform(0, np.pi)
+        path, special_case = obj_info[2]
+        obj_id, _, _ = self.load_obj(path, pos, yaw, special_case)       
+        for _ in range(10):
+            self.step_simulation()
+        self.wait_until_still(obj_id, 150)
+        
+        pos = [self.obj_init_pos[0], self.obj_init_pos[1]+margin, 1.0]
+        yaw = random.uniform(0, np.pi)
+        path, special_case = obj_info[3]
+        obj_id, _, _ = self.load_obj(path, pos, yaw, special_case)       
+        for _ in range(10):
+            self.step_simulation()
+        self.wait_until_still(obj_id, 150)
+
+        self.wait_until_all_still()
+        for handle in box_ids:
+            p.removeBody(handle)
+        box_ids = self.create_temp_box(0.45, 2)
+        self.wait_until_all_still()
+        for handle in box_ids:
+            p.removeBody(handle)
+        self.update_obj_states()
 
     def move_obj_along_axis(self, obj_id, axis, operator, step, stop):
         collison = False

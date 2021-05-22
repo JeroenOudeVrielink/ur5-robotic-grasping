@@ -10,6 +10,7 @@ from network.inference.post_process import post_process_output
 from network.utils.data.camera_data import CameraData
 from network.utils.visualisation.plot import plot_results, save_results
 from network.utils.dataset_processing.grasp import detect_grasps
+import os
 
 
 class GraspGenerator:
@@ -110,7 +111,9 @@ class GraspGenerator:
                             grasp_angle_img=ang_img,
                             no_grasps=3,
                             grasp_width_img=width_img)
-                # @TODO add folder network output if not existing
+                
+                if not os.path.exists('network_output'):
+                    os.mkdir('network_output')
                 time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 save_name = 'network_output/{}'.format(time)
                 fig.savefig(save_name + '.png')
