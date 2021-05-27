@@ -83,7 +83,7 @@ def pile_scenario(n, vis, output, debug):
             rgb, depth, _ = camera.get_cam_img()
             grasps, save_name = generator.predict_grasp(rgb, depth, n_grasps=3, show_output=output)
             
-            for grasp in grasps:
+            for i, grasp in enumerate(grasps):
                 data.add_try()
                 x, y, z, roll, opening_len, obj_height = grasp
                 # print(f'x:{x} y:{y}, z:{z}, roll:{roll}, opening len:{opening_len}, obj height:{obj_height}')
@@ -99,6 +99,8 @@ def pile_scenario(n, vis, output, debug):
                 if succes_target:
                     data.add_succes_target()
                     straight_fails = 0
+                    if save_name is not None:
+                        os.rename(save_name + '.png', save_name + f'_SUCCESS_grasp{i}.png')
                     break
                 else:
                     straight_fails += 1
@@ -139,7 +141,7 @@ def packed_scenario(n):
             rgb, depth, _ = camera.get_cam_img()
             grasps, save_name = generator.predict_grasp(rgb, depth, n_grasps=3, show_output=output)
             
-            for grasp in grasps:
+            for i, grasp in enumerate(grasps):
                 data.add_try()
                 x, y, z, roll, opening_len, obj_height = grasp
                 # print(f'x:{x} y:{y}, z:{z}, roll:{roll}, opening len:{opening_len}, obj height:{obj_height}')
@@ -155,6 +157,8 @@ def packed_scenario(n):
                 if succes_target:
                     data.add_succes_target()
                     straight_fails = 0
+                    if save_name is not None:
+                        os.rename(save_name + '.png', save_name + f'_SUCCESS_grasp{i}.png') 
                     break
                 else:
                     straight_fails += 1
@@ -169,4 +173,5 @@ def packed_scenario(n):
 
 if __name__ == '__main__':
     isolated_obj_scenario(50, vis=False, output=False, debug=False)
-    # pile_scenario(50, vis=True, output=True, debug=False)
+    # pile_scenario(50, v
+    # is=False, output=True, debug=False)

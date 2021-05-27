@@ -316,11 +316,18 @@ class Environment:
         p.changeDynamics(obj_id, 
                         -1, lateralFriction=1, 
                         rollingFriction=0.001, 
-                        spinningFriction=0.001,
+                        spinninFriction=0.001,
                         restitution=0.01)
         # p.changeDynamics(obj_id, 
         #                 -1, lateralFriction=1, 
         #                 restitution=0.01)
+        # p.changeDynamics(obj_id, 
+        #                 -1, lateralFriction=1,
+        #                 restitution=0.01, 
+        #                 contactStiffness=100000,
+        #                 contactDamping=0.0) 
+               
+ 
         self.obj_ids.append(obj_id)
         self.obj_positions.append(pos)
         self.obj_orientations.append(orn)
