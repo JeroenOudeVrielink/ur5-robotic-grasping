@@ -31,7 +31,7 @@ def isolated_obj_scenario(n, vis, output, debug):
             
             rgb, depth, _ = camera.get_cam_img()
             grasps, save_name = generator.predict_grasp(rgb, depth, n_grasps=3, show_output=output)
-            for grasp in grasps:
+            for i, grasp in enumerate(grasps):
                 data.add_try(obj_name)
                 x, y, z, roll, opening_len, obj_height = grasp
                 # print(f'x:{x} y:{y}, z:{z}, roll:{roll}, opening len:{opening_len}, obj height:{obj_height}')
@@ -47,7 +47,7 @@ def isolated_obj_scenario(n, vis, output, debug):
                 if succes_target:
                     data.add_succes_target(obj_name)
                     if save_name is not None:
-                        os.rename(save_name + '.png', save_name + '_SUCCESS.png')
+                        os.rename(save_name + '.png', save_name + f'_SUCCESS_grasp{i}.png')
                     break
                 env.reset_all_obj()
             env.remove_all_obj()
@@ -113,10 +113,10 @@ def pile_scenario(n, vis, output, debug):
     data.summarize()
 
 
-def packed_scenario(n):
-    vis = True
-    output = True
-    debug = False
+def pack_scenario(n, vis, output, debug):
+    vis = vis
+    output = output
+    debug = debug
 
     data = PackPileData(5, n, 'results', 'pack')
     objects = YcbObjects('objects/ycb_objects', ['ChipsCan', 'MustardBottle', 'TomatoSoupCan'])
@@ -172,6 +172,5 @@ def packed_scenario(n):
 
 
 if __name__ == '__main__':
-    isolated_obj_scenario(50, vis=False, output=False, debug=False)
-    # pile_scenario(50, v
-    # is=False, output=True, debug=False)
+    # isolated_obj_scenario(1, vis=True, output=True, debug=False)
+    pack_scenario(50, vis=True, output=True, debug=False)

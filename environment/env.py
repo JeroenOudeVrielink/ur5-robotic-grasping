@@ -90,7 +90,11 @@ class Environment:
         if vis:
             self.eef_debug_lineID = None
             p.addUserDebugLine([camera.x, camera.y, 0], [camera.x, camera.y, camera.z], [0, 1, 0])
-            p.resetDebugVisualizerCamera(2.0, -270., -60., (0., 0., 0.))
+            dist = 1.0
+            yaw = 30
+            pitch = -50
+            target = [0.2, -0.40, 0.785]
+            p.resetDebugVisualizerCamera(dist, yaw, pitch, target)
             # p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, 0) 
 
         # Setup some Limit
@@ -315,8 +319,8 @@ class Environment:
         #                 contactDamping=0.0)        
         p.changeDynamics(obj_id, 
                         -1, lateralFriction=1, 
-                        rollingFriction=0.001, 
-                        spinninFriction=0.001,
+                        rollingFriction=0.002, 
+                        spinningFriction=0.001,
                         restitution=0.01)
         # p.changeDynamics(obj_id, 
         #                 -1, lateralFriction=1, 
