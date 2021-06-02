@@ -295,12 +295,12 @@ class Environment:
             self.obj_positions[i] = pos
             self.obj_orientations[i] = orn  
 
-    def load_obj(self, path, pos, yaw, special_case=False):
+    def load_obj(self, path, pos, yaw, mod_orn=False, mod_stiffness=False):
         orn = p.getQuaternionFromEuler([0, 0, yaw])
         obj_id = p.loadURDF(path, pos, orn)
         # adjust position according to height
         aabb = p.getAABB(obj_id, -1)
-        if special_case:
+        if mod_orn:
             minm, maxm = aabb[0][1], aabb[1][1]
             orn = p.getQuaternionFromEuler([0, np.pi*0.5, yaw])
         else:
@@ -309,41 +309,32 @@ class Environment:
         pos[2] += (maxm - minm) / 2 
         p.resetBasePositionAndOrientation(obj_id, pos, orn)
         #change dynamics
-        # p.changeDynamics(obj_id, -1, lateralFriction=1, restitution=0.01, contactStiffness=100, contactDamping=0)
-        # p.changeDynamics(obj_id, 
-        #                 -1, lateralFriction=1, 
-        #                 rollingFriction=0.001, 
-        #                 spinningFriction=0.001,
-        #                 restitution=0.01, 
-        #                 contactStiffness=100000, 
-        #                 contactDamping=0.0)        
-        p.changeDynamics(obj_id, 
-                        -1, lateralFriction=1, 
-                        rollingFriction=0.002, 
-                        spinningFriction=0.001,
-                        restitution=0.01)
-        # p.changeDynamics(obj_id, 
-        #                 -1, lateralFriction=1, 
-        #                 restitution=0.01)
-        # p.changeDynamics(obj_id, 
-        #                 -1, lateralFriction=1,
-        #                 restitution=0.01, 
-        #                 contactStiffness=100000,
-        #                 contactDamping=0.0) 
-               
- 
+        if mod_stiffness:
+            p.changeDynamics(obj_id, 
+                            -1, lateralFriction=1, 
+                            rollingFriction=0.001, 
+                            spinningFriction=0.001,
+                            restitution=0.01, 
+                            contactStiffness=100000, 
+                            contactDamping=0.0)
+        else:   
+            p.changeDynamics(obj_id, 
+                            -1, lateralFriction=1, 
+                            rollingFriction=0.002, 
+                            spinningFriction=0.001,
+                            restitution=0.01)
         self.obj_ids.append(obj_id)
         self.obj_positions.append(pos)
         self.obj_orientations.append(orn)
         return obj_id, pos, orn
 
-    def load_isolated_obj(self, path, special_case=False):
+    def load_isolated_obj(self, path, mod_orn=False, mod_stiffness=False):
         r_x = random.uniform(self.obj_init_pos[0] - 0.1, self.obj_init_pos[0] + 0.1)
         r_y = random.uniform(self.obj_init_pos[1] - 0.1, self.obj_init_pos[1] + 0.1)
         yaw = random.uniform(0, np.pi)
 
         pos = [r_x, r_y, self.Z_TABLE_TOP]
-        obj_id, _, _ = self.load_obj(path, pos, yaw, special_case)
+        obj_id, _, _ = self.load_obj(path, pos, yaw, mod_orn, mod_stiffness)
         for _ in range(10):
             self.step_simulation()
         self.wait_until_still(obj_id)
@@ -373,7 +364,7 @@ class Environment:
 
     def create_pile(self, obj_info):
         box_ids = self.create_temp_box(0.30, 1)
-        for path, special_case in obj_info:
+        for path, mod_orn, mod_stiffness in obj_info:
             margin = 0.025
             r_x = random.uniform(self.obj_init_pos[0] - margin, self.obj_init_pos[0] + margin)
             r_y = random.uniform(self.obj_init_pos[1] - margin, self.obj_init_pos[1] + margin)
@@ -382,7 +373,7 @@ class Environment:
             # pos = [self.obj_init_pos[0], self.obj_init_pos[1], 1.0]
             # yaw = random.uniform(0, np.pi)
 
-            obj_id, _, _ = self.load_obj(path, pos, yaw, special_case)       
+            obj_id, _, _ = self.load_obj(path, pos, yaw, mod_orn, mod_stiffness)       
             for _ in range(10):
                 self.step_simulation()
             self.wait_until_still(obj_id, 150)
@@ -395,51 +386,6 @@ class Environment:
         for handle in box_ids:
             p.removeBody(handle)
         self.wait_until_all_still()
-        self.update_obj_states()
-
-    def create_pile2(self, obj_info):
-        box_ids = self.create_temp_box(0.3, 1)
-        
-        margin = 0.05
-        pos = [self.obj_init_pos[0]-margin, self.obj_init_pos[1], 1.0]
-        yaw = random.uniform(0, np.pi)
-        path, special_case = obj_info[0]
-        obj_id, _, _ = self.load_obj(path, pos, yaw, special_case)       
-        for _ in range(10):
-            self.step_simulation()
-        self.wait_until_still(obj_id, 150)
-        
-        pos = [self.obj_init_pos[0]+margin, self.obj_init_pos[1], 1.0]
-        yaw = random.uniform(0, np.pi)
-        path, special_case = obj_info[1]
-        obj_id, _, _ = self.load_obj(path, pos, yaw, special_case)       
-        for _ in range(10):
-            self.step_simulation()
-        self.wait_until_still(obj_id, 150)
-        
-        pos = [self.obj_init_pos[0], self.obj_init_pos[1]-margin, 1.0]
-        yaw = random.uniform(0, np.pi)
-        path, special_case = obj_info[2]
-        obj_id, _, _ = self.load_obj(path, pos, yaw, special_case)       
-        for _ in range(10):
-            self.step_simulation()
-        self.wait_until_still(obj_id, 150)
-        
-        pos = [self.obj_init_pos[0], self.obj_init_pos[1]+margin, 1.0]
-        yaw = random.uniform(0, np.pi)
-        path, special_case = obj_info[3]
-        obj_id, _, _ = self.load_obj(path, pos, yaw, special_case)       
-        for _ in range(10):
-            self.step_simulation()
-        self.wait_until_still(obj_id, 150)
-
-        self.wait_until_all_still()
-        for handle in box_ids:
-            p.removeBody(handle)
-        box_ids = self.create_temp_box(0.45, 2)
-        self.wait_until_all_still()
-        for handle in box_ids:
-            p.removeBody(handle)
         self.update_obj_states()
 
     def move_obj_along_axis(self, obj_id, axis, operator, step, stop):
@@ -475,22 +421,22 @@ class Environment:
     def create_packed(self, obj_info):
         init_x, init_y, init_z = self.obj_init_pos[0], self.obj_init_pos[1], self.Z_TABLE_TOP
         yaw = random.uniform(0, np.pi)
-        path, special_case = obj_info[0]
-        center_obj, _, _ = self.load_obj(path, [init_x, init_y, init_z], yaw, special_case)
+        path, mod_orn, mod_stiffness = obj_info[0]
+        center_obj, _, _ = self.load_obj(path, [init_x, init_y, init_z], yaw, mod_orn, mod_stiffness)
 
         margin = 0.3
         yaw = random.uniform(0, np.pi)
-        path, special_case = obj_info[1]
-        left_obj_id, _, _ = self.load_obj(path, [init_x-margin, init_y, init_z], yaw, special_case)    
+        path, mod_orn, mod_stiffness = obj_info[1]
+        left_obj_id, _, _ = self.load_obj(path, [init_x-margin, init_y, init_z], yaw, mod_orn, mod_stiffness)    
         yaw = random.uniform(0, np.pi)
-        path, special_case = obj_info[2]
-        top_obj_id, _, _ = self.load_obj(path, [init_x, init_y+margin, init_z], yaw, special_case)    
+        path, mod_orn, mod_stiffness = obj_info[2]
+        top_obj_id, _, _ = self.load_obj(path, [init_x, init_y+margin, init_z], yaw, mod_orn, mod_stiffness)    
         yaw = random.uniform(0, np.pi)
-        path, special_case = obj_info[3]
-        right_obj_id, _, _ = self.load_obj(path, [init_x+margin, init_y, init_z], yaw, special_case)       
+        path, mod_orn, mod_stiffness = obj_info[3]
+        right_obj_id, _, _ = self.load_obj(path, [init_x+margin, init_y, init_z], yaw, mod_orn, mod_stiffness)       
         yaw = random.uniform(0, np.pi)
-        path, special_case = obj_info[4]
-        down_obj_id, _, _ = self.load_obj(path, [init_x, init_y-margin, init_z], yaw, special_case) 
+        path, mod_orn, mod_stiffness = obj_info[4]
+        down_obj_id, _, _ = self.load_obj(path, [init_x, init_y-margin, init_z], yaw, mod_orn, mod_stiffness) 
         
         self.wait_until_all_still()
         step = 0.01

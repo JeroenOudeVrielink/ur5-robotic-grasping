@@ -1,0 +1,19 @@
+Total:
+Target acc=0.919 (1466/1596) Grasp acc=0.948 (1513/1596)
+
+Accuracy per object:
+Banana: Target acc=0.980 (100/102) Grasp acc=0.980 (100/102)
+ChipsCan: Target acc=0.990 (100/101) Grasp acc=0.990 (100/101)
+CrackerBox: Target acc=0.943 (99/105) Grasp acc=0.952 (100/105)
+GelatinBox: Target acc=1.000 (100/100) Grasp acc=1.000 (100/100)
+Hammer: Target acc=0.952 (100/105) Grasp acc=0.990 (104/105)
+MasterChefCan: Target acc=0.857 (90/105) Grasp acc=0.914 (96/105)
+MediumClamp: Target acc=0.788 (93/118) Grasp acc=0.907 (107/118)
+MustardBottle: Target acc=0.861 (99/115) Grasp acc=0.870 (100/115)
+Pear: Target acc=0.907 (97/107) Grasp acc=0.972 (104/107)
+PottedMeatCan: Target acc=0.901 (100/111) Grasp acc=0.928 (103/111)
+PowerDrill: Target acc=0.990 (99/100) Grasp acc=1.000 (100/100)
+Scissors: Target acc=0.892 (99/111) Grasp acc=0.937 (104/111)
+Strawberry: Target acc=0.950 (95/100) Grasp acc=1.000 (100/100)
+TennisBall: Target acc=1.000 (100/100) Grasp acc=1.000 (100/100)
+TomatoSoupCan: Target acc=0.819 (95/116) Grasp acc=0.819 (95/116)

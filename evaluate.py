@@ -3,16 +3,15 @@ from environment.utilities import Camera
 from environment.env import Environment
 from utils import YcbObjects, PackPileData, IsolatedObjData, summarize
 import pybullet as p
-import numpy as np
-import sys
 import os
-import time
-import random
+import sys
 sys.path.append('network')
 
 def isolated_obj_scenario(n, vis, output, debug):
 
-    objects = YcbObjects('objects/ycb_objects', ['ChipsCan', 'MustardBottle', 'TomatoSoupCan'])
+    objects = YcbObjects('objects/ycb_objects', 
+                        mod_orn=['ChipsCan', 'MustardBottle', 'TomatoSoupCan'], 
+                        mod_stiffness=['Strawberry'])
     data = IsolatedObjData(objects.obj_names, n, 'results')
 
     center_x, center_y = 0.05, -0.52
@@ -25,8 +24,8 @@ def isolated_obj_scenario(n, vis, output, debug):
         print(obj_name)       
         for _ in range(n):
 
-            path, special_case = objects.get_obj_info(obj_name)
-            env.load_isolated_obj(path, special_case)
+            path, mod_orn, mod_stiffness = objects.get_obj_info(obj_name)
+            env.load_isolated_obj(path, mod_orn, mod_stiffness)
             env.move_away_arm()
             
             rgb, depth, _ = camera.get_cam_img()
@@ -59,7 +58,8 @@ def pile_scenario(n, vis, output, debug):
 
     data = PackPileData(5, n, 'results', 'pile')
     objects = YcbObjects('objects/ycb_objects', 
-                        special_cases=['ChipsCan', 'MustardBottle', 'TomatoSoupCan'], 
+                        special_cases=['ChipsCan', 'MustardBottle', 'TomatoSoupCan'],
+                        mod_stiffness=['Strawberry'], 
                         exclude=['CrackerBox', 'Hammer'])
     center_x, center_y = 0.05, -0.52
     network_path = 'network/trained-models/cornell-randsplit-rgbd-grconvnet3-drop1-ch32/epoch_19_iou_0.98'
@@ -119,13 +119,14 @@ def pack_scenario(n, vis, output, debug):
     debug = debug
 
     data = PackPileData(5, n, 'results', 'pack')
-    objects = YcbObjects('objects/ycb_objects', ['ChipsCan', 'MustardBottle', 'TomatoSoupCan'])
+    objects = YcbObjects('objects/ycb_objects', 
+                        mod_orn=['ChipsCan', 'MustardBottle', 'TomatoSoupCan'], 
+                        mod_stiffness=['Strawberry'])
     center_x, center_y = 0.05, -0.52
     network_path = 'network/trained-models/cornell-randsplit-rgbd-grconvnet3-drop1-ch32/epoch_19_iou_0.98'
     camera = Camera((center_x, center_y, 1.9), (center_x, center_y, 0.785), 0.2, 2.0, (224, 224), 40)
     env = Environment(camera, vis=vis, debug=debug, finger_length=0.06)
     generator = GraspGenerator(network_path, camera, 5)
-
 
     for i in range(n):
         print(f'Trial {i}')
@@ -172,5 +173,5 @@ def pack_scenario(n, vis, output, debug):
 
 
 if __name__ == '__main__':
-    # isolated_obj_scenario(1, vis=True, output=True, debug=False)
-    pack_scenario(50, vis=True, output=True, debug=False)
+    # isolated_obj_scenario(100, vis=False, output=True, debug=False)
+    pack_scenario(100, vis=False, output=True, debug=False)

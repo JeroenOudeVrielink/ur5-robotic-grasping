@@ -8,9 +8,10 @@ from matplotlib.ticker import FuncFormatter
 
 
 class YcbObjects:
-    def __init__(self, load_path, special_cases=None, exclude=None):
+    def __init__(self, load_path, mod_orn=None, mod_stiffness=None, exclude=None):
         self.load_path = load_path
-        self.special_cases = special_cases
+        self.mod_orn = mod_orn
+        self.mod_stiffness = mod_stiffness
         with open(load_path + '/obj_list.txt') as f:
             lines = f.readlines()
             self.obj_names = [line.rstrip('\n') for line in lines]
@@ -24,13 +25,18 @@ class YcbObjects:
     def get_obj_path(self, obj_name):
         return f'{self.load_path}/Ycb{obj_name}/model.urdf'
 
-    def check_special_case(self, obj_name):
-        if obj_name in self.special_cases:
+    def check_mod_orn(self, obj_name):
+        if self.mod_orn is not None and obj_name in self.mod_orn:
+            return True
+        return False
+   
+    def check_mod_stiffness(self, obj_name):
+        if self.mod_stiffness is not None and obj_name in self.mod_stiffness:
             return True
         return False
 
     def get_obj_info(self, obj_name):
-        return self.get_obj_path(obj_name), self.check_special_case(obj_name)
+        return self.get_obj_path(obj_name), self.check_mod_orn(obj_name), self.check_mod_stiffness(obj_name)
 
     def get_n_first_obj_info(self, n):
         info = []
@@ -128,15 +134,16 @@ def plot(path, tries, target, grasp, trials):
     df = pd.DataFrame(succes_rate).T
     df.columns = ['Target', 'Grasped']
     df = df.sort_values(by ='Target', ascending=True)
-    ax = df.plot(kind='bar')
-    plt.xlabel('Name')
-    plt.ylabel('Accuracy')
-    plt.title(f'Accuracy objects placed in target and grasped | {trials} trials')
+    ax = df.plot(kind='bar', color=['indianred', 'seagreen'])
+    plt.xlabel('Object name')
+    plt.ylabel('Succes rate (%)')
+    plt.title(f'Succes rate of objects grasped and placed in target | {trials} trials')
     plt.grid(color='#95a5a6', linestyle='-', linewidth=1, axis='y', alpha=0.5)
     ax.yaxis.set_major_formatter(FuncFormatter(lambda y, _: '{:.0%}'.format(y)))
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha="right", rotation_mode="anchor")     
+    plt.locator_params(axis="y", nbins=11)
     plt.legend(loc='lower right')
-    plt.subplots_adjust(bottom=0.3)
-
+    plt.subplots_adjust(bottom=0.28)
     plt.savefig(path+'/plot.png')
 
 def write_summary(path, tries, target, grasp):        
@@ -166,10 +173,10 @@ def summarize(path, trials):
 
 
 if __name__=='__main__':
-    path = 'results/2021-05-17 10:06:47'
-    # summarize(path, trials=20)
-    data = PackPileData(5, 5, 'test', 'pack')
-    data.add_try()
-    data.add_try()
-    data.add_try()
-    data.summarize()
+    path = 'results/iso_obj_50trials_no_stiffness_rollfric=0.001_21_05'
+    summarize(path, trials=50)
+    # data = PackPileData(5, 5, 'test', 'pack')
+    # data.add_try()
+    # data.add_try()
+    # data.add_try()
+    # data.summarize()
