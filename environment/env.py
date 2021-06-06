@@ -313,7 +313,7 @@ class Environment:
             p.changeDynamics(obj_id, 
                             -1, lateralFriction=1, 
                             rollingFriction=0.001, 
-                            spinningFriction=0.001,
+                            spinningFriction=0.002,
                             restitution=0.01, 
                             contactStiffness=100000, 
                             contactDamping=0.0)

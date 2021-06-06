@@ -58,7 +58,7 @@ def pile_scenario(n, vis, output, debug):
 
     data = PackPileData(5, n, 'results', 'pile')
     objects = YcbObjects('objects/ycb_objects', 
-                        special_cases=['ChipsCan', 'MustardBottle', 'TomatoSoupCan'],
+                        mod_orn=['ChipsCan', 'MustardBottle', 'TomatoSoupCan'],
                         mod_stiffness=['Strawberry'], 
                         exclude=['CrackerBox', 'Hammer'])
     center_x, center_y = 0.05, -0.52
@@ -78,6 +78,8 @@ def pile_scenario(n, vis, output, debug):
 
         straight_fails = 0
         while len(env.obj_ids) != 0 and straight_fails < 3:
+            print(f'N objs:{len(env.obj_ids)} straight fails:{straight_fails}')
+
             env.move_away_arm()
             env.reset_all_obj()
             rgb, depth, _ = camera.get_cam_img()
@@ -174,4 +176,5 @@ def pack_scenario(n, vis, output, debug):
 
 if __name__ == '__main__':
     # isolated_obj_scenario(100, vis=False, output=True, debug=False)
-    pack_scenario(100, vis=False, output=True, debug=False)
+    # pack_scenario(100, vis=False, output=True, debug=False)
+    pile_scenario(100, vis=False, output=True, debug=False)

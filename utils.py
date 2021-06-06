@@ -134,7 +134,7 @@ def plot(path, tries, target, grasp, trials):
     df = pd.DataFrame(succes_rate).T
     df.columns = ['Target', 'Grasped']
     df = df.sort_values(by ='Target', ascending=True)
-    ax = df.plot(kind='bar', color=['indianred', 'seagreen'])
+    ax = df.plot(kind='bar', color=['coral', 'royalblue'])
     plt.xlabel('Object name')
     plt.ylabel('Succes rate (%)')
     plt.title(f'Succes rate of objects grasped and placed in target | {trials} trials')
@@ -173,8 +173,8 @@ def summarize(path, trials):
 
 
 if __name__=='__main__':
-    path = 'results/iso_obj_50trials_no_stiffness_rollfric=0.001_21_05'
-    summarize(path, trials=50)
+    path = 'results/iso_obj_100runs'
+    summarize(path, trials=100)
     # data = PackPileData(5, 5, 'test', 'pack')
     # data.add_try()
     # data.add_try()

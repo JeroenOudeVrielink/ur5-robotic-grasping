@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.draw import polygon
+from skimage.draw.draw import line
 from skimage.feature import peak_local_max
 
 
@@ -332,7 +333,7 @@ class GraspRectangle:
         """
         points = np.vstack((self.points, self.points[0]))
         ax.plot(points[:, 1], points[:, 0], color=color)
-        ax.plot(self.center[1], self.center[0], '.', color=color)
+        ax.plot(self.center[1], self.center[0], '.')
         ax.legend(['score: {0:.2f}'.format(q)])
 
     def zoom(self, factor, center):
