@@ -5,6 +5,7 @@ import functools
 import os
 from datetime import datetime
 
+
 def setup_sisbot(p, robotID, gripper_type):
     controlJoints = ["shoulder_pan_joint", "shoulder_lift_joint",
                      "elbow_joint", "wrist_1_joint",
@@ -29,7 +30,8 @@ def setup_sisbot(p, robotID, gripper_type):
         info = jointInfo(jointID, jointName, jointType, jointLowerLimit,
                          jointUpperLimit, jointMaxForce, jointMaxVelocity, controllable)
         if info.type == "REVOLUTE":  # set revolute joint to static
-            p.setJointMotorControl2(robotID, info.id, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
+            p.setJointMotorControl2(
+                robotID, info.id, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
         joints[info.name] = info
 
     # explicitly deal with mimic joints
@@ -47,10 +49,12 @@ def setup_sisbot(p, robotID, gripper_type):
                 p.setJointMotorControl2(robotID, child.id, controlMode, targetPosition=childPose,
                                         force=child.maxForce, maxVelocity=child.maxVelocity)
         else:
-            raise NotImplementedError("controlGripper does not support \"{}\" control mode".format(controlMode))
+            raise NotImplementedError(
+                "controlGripper does not support \"{}\" control mode".format(controlMode))
         # check if there
         if len(kwargs) is not 0:
-            raise KeyError("No keys {} in controlGripper".format(", ".join(kwargs.keys())))
+            raise KeyError("No keys {} in controlGripper".format(
+                ", ".join(kwargs.keys())))
 
     assert gripper_type in ['85', '140']
     mimicParentName = "finger_joint"
@@ -68,8 +72,10 @@ def setup_sisbot(p, robotID, gripper_type):
             "left_inner_finger_joint": 1,
             "right_inner_finger_joint": 1}
     parent = joints[mimicParentName]
-    children = AttrDict((j, joints[j]) for j in joints if j in mimicChildren.keys())
-    controlRobotiqC2 = functools.partial(controlGripper, robotID, parent, children, mimicChildren)
+    children = AttrDict((j, joints[j])
+                        for j in joints if j in mimicChildren.keys())
+    controlRobotiqC2 = functools.partial(
+        controlGripper, robotID, parent, children, mimicChildren)
 
     return joints, controlRobotiqC2, controlJoints, mimicParentName
 
@@ -102,11 +108,13 @@ def setup_sisbot_force(p, robotID, gripper_type):
                          jointUpperLimit, jointMaxForce, jointMaxVelocity, controllable,
                          jointAxis, parentFramePos, parentFrameOrn)
         if info.type == "REVOLUTE":  # set revolute joint to static
-            p.setJointMotorControl2(robotID, info.id, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
+            p.setJointMotorControl2(
+                robotID, info.id, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
         joints[info.name] = info
     for j in joints:
         print(joints[j])
     # explicitly deal with mimic joints
+
     def controlGripper(robotID, parent, children, mul, **kwargs):
         controlMode = kwargs.pop("controlMode")
         if controlMode == p.POSITION_CONTROL:
@@ -124,10 +132,12 @@ def setup_sisbot_force(p, robotID, gripper_type):
                 p.setJointMotorControl2(robotID, child.id, controlMode, targetPosition=childPose,
                                         force=child.maxForce, maxVelocity=child.maxVelocity)
         else:
-            raise NotImplementedError("controlGripper does not support \"{}\" control mode".format(controlMode))
+            raise NotImplementedError(
+                "controlGripper does not support \"{}\" control mode".format(controlMode))
         # check if there
         if len(kwargs) is not 0:
-            raise KeyError("No keys {} in controlGripper".format(", ".join(kwargs.keys())))
+            raise KeyError("No keys {} in controlGripper".format(
+                ", ".join(kwargs.keys())))
 
     assert gripper_type in ['85', '140']
     mimicParentName = "finger_joint"
@@ -145,7 +155,8 @@ def setup_sisbot_force(p, robotID, gripper_type):
             "left_inner_finger_joint": 1,
             "right_inner_finger_joint": 1}
     parent = joints[mimicParentName]
-    children = AttrDict((j, joints[j]) for j in joints if j in mimicChildren.keys())
+    children = AttrDict((j, joints[j])
+                        for j in joints if j in mimicChildren.keys())
     # Create all the gear constraint
     for name in children:
         child = children[name]
@@ -153,7 +164,8 @@ def setup_sisbot_force(p, robotID, gripper_type):
                                # child.parentFramePos, (0, 0, 0), child.parentFrameOrn, (0, 0, 0))
                                (0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0))
         p.changeConstraint(c, gearRatio=-mimicChildren[name], maxForce=10000)
-    controlRobotiqC2 = functools.partial(controlGripper, robotID, parent, children, mimicChildren)
+    controlRobotiqC2 = functools.partial(
+        controlGripper, robotID, parent, children, mimicChildren)
 
     return joints, controlRobotiqC2, controlJoints, mimicParentName
 
@@ -165,9 +177,10 @@ class Camera:
         self.width, self.height = size
         self.near, self.far = near, far
         self.fov = fov
-        
+
         aspect = self.width / self.height
-        self.projection_matrix = p.computeProjectionMatrixFOV(fov, aspect, near, far)
+        self.projection_matrix = p.computeProjectionMatrixFOV(
+            fov, aspect, near, far)
         self.view_matrix = p.computeViewMatrix(cam_pos, cam_target, [0, 1, 0])
 
         self.rec_id = None
@@ -184,7 +197,7 @@ class Camera:
         _w, _h, rgb, depth, seg = p.getCameraImage(self.width, self.height,
                                                    self.view_matrix, self.projection_matrix,
                                                    )
-        return rgb[:,:,0:3], depth, seg
+        return rgb[:, :, 0:3], depth, seg
 
     def start_recording(self, save_dir):
         if not os.path.exists(save_dir):
@@ -192,7 +205,6 @@ class Camera:
         now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         file = f'{save_dir}/{now}.mp4'
 
-        # p.resetDebugVisualizerCamera(dist, yaw, pitch, target)
         p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
         self.rec_id = p.startStateLogging(p.STATE_LOGGING_VIDEO_MP4, file)
 

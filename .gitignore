@@ -131,16 +131,5 @@ dmypy.json
 # VS code
 .vscode
 
-test.py
-*.pdf
-debug_coords_tf.py
-test_ycb_wrapper.py
 /network_output
-debug.py
-question.txt
-test_clutter.py
-test_pile.py
-pile_pics*/
-recordings/
-mistakes.txt
-record_demo.py
+/results

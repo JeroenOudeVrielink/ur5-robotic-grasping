@@ -1,4 +1,0 @@
-Target acc=0.76875
-Grasp acc=0.825
-
-

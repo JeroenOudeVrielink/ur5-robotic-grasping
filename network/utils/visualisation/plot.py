@@ -136,7 +136,7 @@ def save_results(rgb_img, grasp_q_img, grasp_angle_img, depth_img=None, no_grasp
     ax.axis('off')
     fig.savefig('example_imgs/rgb.png')
 
-    if depth_img.any():
+    if depth_img is not None and depth_img.any():
         fig = plt.figure(figsize=(10, 10))
         plt.ion()
         plt.clf()

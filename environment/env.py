@@ -16,7 +16,7 @@ class Environment:
     GRIPPER_MOVING_HEIGHT = 1.25
     GRIPPER_GRASPED_LIFT_HEIGHT = 1.4
     TARGET_ZONE_POS = [0.7, 0.0, 0.685]
-    SIMULATION_STEP_DELAY = 1 / 400.
+    SIMULATION_STEP_DELAY = 1 / 240.
     FINGER_LENGTH = 0.06
     Z_TABLE_TOP = 0.785
     GRIP_REDUCTION = 0.60
@@ -32,7 +32,8 @@ class Environment:
         self.obj_orientations = []
 
         if gripper_type not in ('85', '140'):
-            raise NotImplementedError('Gripper %s not implemented.' % gripper_type)
+            raise NotImplementedError(
+                'Gripper %s not implemented.' % gripper_type)
         self.gripper_type = gripper_type
         self.finger_length = finger_length
 
@@ -46,56 +47,65 @@ class Environment:
                                   p.getQuaternionFromEuler([0, 0, 0]),
                                   useFixedBase=True)
         self.target_table_id = p.loadURDF('environment/urdf/objects/target_table.urdf',
-                                  [0.7, 0.0, 0.66],
-                                  p.getQuaternionFromEuler([0, 0, 0]),
-                                  useFixedBase=True)     
+                                          [0.7, 0.0, 0.66],
+                                          p.getQuaternionFromEuler([0, 0, 0]),
+                                          useFixedBase=True)
         self.target_id = p.loadURDF('environment/urdf/objects/traybox.urdf',
-                                  self.TARGET_ZONE_POS,
-                                  p.getQuaternionFromEuler([0, 0, 0]),
-                                  useFixedBase=True,
-                                  globalScaling=0.7)
+                                    self.TARGET_ZONE_POS,
+                                    p.getQuaternionFromEuler([0, 0, 0]),
+                                    useFixedBase=True,
+                                    globalScaling=0.7)
         self.UR5Stand_id = p.loadURDF('environment/urdf/objects/ur5_stand.urdf',
-                                     [-0.7, -0.36, 0.0],
-                                     p.getQuaternionFromEuler([0, 0, 0]),
-                                     useFixedBase=True)
+                                      [-0.7, -0.36, 0.0],
+                                      p.getQuaternionFromEuler([0, 0, 0]),
+                                      useFixedBase=True)
         self.robot_id = p.loadURDF('environment/urdf/ur5_robotiq_%s.urdf' % gripper_type,
-                                  [0, 0, 0.0],  # StartPosition
-                                  p.getQuaternionFromEuler([0, 0, 0]),  # StartOrientation
-                                  useFixedBase=True,
-                                  flags=p.URDF_USE_INERTIA_FROM_FILE)
+                                   [0, 0, 0.0],  # StartPosition
+                                   p.getQuaternionFromEuler(
+                                       [0, 0, 0]),  # StartOrientation
+                                   useFixedBase=True,
+                                   flags=p.URDF_USE_INERTIA_FROM_FILE)
         self.joints, self.controlGripper, self.controlJoints, self.mimicParentName =\
             setup_sisbot(p, self.robot_id, gripper_type)
         self.eef_id = 7  # ee_link
-        
+
         # Add force sensors
-        p.enableJointForceTorqueSensor(self.robot_id, self.joints['left_inner_finger_pad_joint'].id)
-        p.enableJointForceTorqueSensor(self.robot_id, self.joints['right_inner_finger_pad_joint'].id)
-        
+        p.enableJointForceTorqueSensor(
+            self.robot_id, self.joints['left_inner_finger_pad_joint'].id)
+        p.enableJointForceTorqueSensor(
+            self.robot_id, self.joints['right_inner_finger_pad_joint'].id)
+
         # Change the friction of the gripper
-        p.changeDynamics(self.robot_id, self.joints['left_inner_finger_pad_joint'].id, lateralFriction=1)
-        p.changeDynamics(self.robot_id, self.joints['right_inner_finger_pad_joint'].id, lateralFriction=1)
-        
+        p.changeDynamics(
+            self.robot_id, self.joints['left_inner_finger_pad_joint'].id, lateralFriction=1)
+        p.changeDynamics(
+            self.robot_id, self.joints['right_inner_finger_pad_joint'].id, lateralFriction=1)
+
         # custom sliders to tune parameters (name of the parameter,range,initial value)
         # Task space (Cartesian space)
         if debug:
             self.xin = p.addUserDebugParameter('x', -0.4, 0.4, 0.11)
             self.yin = p.addUserDebugParameter('y', -0.8, 0, -0.49)
             self.zin = p.addUserDebugParameter('z', 0.9, 1.3, 1.1)
-            self.rollId = p.addUserDebugParameter('roll', -3.14, 3.14, 0)  # -1.57 yaw
-            self.pitchId = p.addUserDebugParameter('pitch', -3.14, 3.14, np.pi/2)
-            self.yawId = p.addUserDebugParameter('yaw', -np.pi/2, np.pi/2, 0)  # -3.14 pitch
-            self.gripper_opening_length_control = p.addUserDebugParameter('gripper_opening_length', 0, 0.1, 0.085)
+            self.rollId = p.addUserDebugParameter(
+                'roll', -3.14, 3.14, 0)  # -1.57 yaw
+            self.pitchId = p.addUserDebugParameter(
+                'pitch', -3.14, 3.14, np.pi/2)
+            self.yawId = p.addUserDebugParameter(
+                'yaw', -np.pi/2, np.pi/2, 0)  # -3.14 pitch
+            self.gripper_opening_length_control = p.addUserDebugParameter(
+                'gripper_opening_length', 0, 0.1, 0.085)
 
         # Add debug lines for end effector and camera
         if vis:
             self.eef_debug_lineID = None
-            p.addUserDebugLine([camera.x, camera.y, 0], [camera.x, camera.y, camera.z], [0, 1, 0])
+            p.addUserDebugLine([camera.x, camera.y, 0], [
+                               camera.x, camera.y, camera.z], [0, 1, 0], lineWidth=3)
             dist = 1.0
             yaw = 30
             pitch = -50
             target = [0.2, -0.40, 0.785]
             p.resetDebugVisualizerCamera(dist, yaw, pitch, target)
-            # p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, 0) 
 
         # Setup some Limit
         self.gripper_open_limit = (0.0, 0.1)
@@ -109,14 +119,16 @@ class Environment:
         Hook p.stepSimulation()
         """
         p.stepSimulation()
-        if self.vis:    
-            if self.eef_debug_lineID is not None:
-                p.removeUserDebugItem(self.eef_debug_lineID)
-            eef_xyz = p.getLinkState(self.robot_id, self.eef_id)[0:1]
-            end = np.array(eef_xyz[0])
-            end[2] -= 0.5
-            self.eef_debug_lineID = p.addUserDebugLine(np.array(eef_xyz[0]), end, [1, 0, 0])
-            # time.sleep(self.SIMULATION_STEP_DELAY)            
+        if self.vis:
+            if self.debug:
+                if self.eef_debug_lineID is not None:
+                    p.removeUserDebugItem(self.eef_debug_lineID)
+                eef_xyz = p.getLinkState(self.robot_id, self.eef_id)[0:1]
+                end = np.array(eef_xyz[0])
+                end[2] -= 0.5
+                self.eef_debug_lineID = p.addUserDebugLine(
+                    np.array(eef_xyz[0]), end, [1, 0, 0])
+            time.sleep(self.SIMULATION_STEP_DELAY)
 
     @staticmethod
     def is_still(handle):
@@ -125,22 +137,23 @@ class Environment:
         # print(np.abs(lin_vel).sum() + np.abs(ang_vel).sum())
         return np.abs(lin_vel).sum() + np.abs(ang_vel).sum() < still_eps
 
-    def wait_until_still(self, objID ,max_wait_epochs=1000):
+    def wait_until_still(self, objID, max_wait_epochs=1000):
         for _ in range(max_wait_epochs):
             self.step_simulation()
             if self.is_still(objID):
                 return
         if self.debug:
-            print('Warning: Not still after MAX_WAIT_EPOCHS = %d.' % max_wait_epochs)
+            print('Warning: Not still after MAX_WAIT_EPOCHS = %d.' %
+                  max_wait_epochs)
 
-    
     def wait_until_all_still(self, max_wait_epochs=1000):
         for _ in range(max_wait_epochs):
             self.step_simulation()
             if np.all(list(self.is_still(obj_id) for obj_id in self.obj_ids)):
                 return
         if self.debug:
-            print('Warning: Not still after MAX_WAIT_EPOCHS = %d.' % max_wait_epochs)
+            print('Warning: Not still after MAX_WAIT_EPOCHS = %d.' %
+                  max_wait_epochs)
 
     def read_debug_parameter(self):
         # read the value of task parameter
@@ -150,7 +163,8 @@ class Environment:
         roll = p.readUserDebugParameter(self.rollId)
         pitch = p.readUserDebugParameter(self.pitchId)
         yaw = p.readUserDebugParameter(self.yawId)
-        gripper_opening_length = p.readUserDebugParameter(self.gripper_opening_length_control)
+        gripper_opening_length = p.readUserDebugParameter(
+            self.gripper_opening_length_control)
 
         return x, y, z, roll, pitch, yaw, gripper_opening_length
 
@@ -160,7 +174,8 @@ class Environment:
         for _ in range(60):
             for i, name in enumerate(self.controlJoints):
                 if i == 6:
-                    self.controlGripper(controlMode=p.POSITION_CONTROL, targetPosition=user_parameters[i])
+                    self.controlGripper(
+                        controlMode=p.POSITION_CONTROL, targetPosition=user_parameters[i])
                     break
                 joint = self.joints[name]
                 # control robot joints
@@ -181,9 +196,12 @@ class Environment:
         left_index = self.joints['left_inner_finger_pad_joint'].id
         right_index = self.joints['right_inner_finger_pad_joint'].id
 
-        contact_left = p.getContactPoints(bodyA=self.robot_id, linkIndexA=left_index)
-        contact_right = p.getContactPoints(bodyA=self.robot_id, linkIndexA=right_index)
-        contact_ids = set(item[2] for item in contact_left + contact_right if item[2] in [self.obj_id])
+        contact_left = p.getContactPoints(
+            bodyA=self.robot_id, linkIndexA=left_index)
+        contact_right = p.getContactPoints(
+            bodyA=self.robot_id, linkIndexA=right_index)
+        contact_ids = set(item[2] for item in contact_left +
+                          contact_right if item[2] in [self.obj_id])
         if len(contact_ids) == 1:
             return True
         return False
@@ -192,9 +210,12 @@ class Environment:
         left_index = self.joints['left_inner_finger_pad_joint'].id
         right_index = self.joints['right_inner_finger_pad_joint'].id
 
-        contact_left = p.getContactPoints(bodyA=self.robot_id, linkIndexA=left_index)
-        contact_right = p.getContactPoints(bodyA=self.robot_id, linkIndexA=right_index)
-        contact_ids = set(item[2] for item in contact_left + contact_right if item[2] in self.obj_ids)
+        contact_left = p.getContactPoints(
+            bodyA=self.robot_id, linkIndexA=left_index)
+        contact_right = p.getContactPoints(
+            bodyA=self.robot_id, linkIndexA=right_index)
+        contact_ids = set(item[2] for item in contact_left +
+                          contact_right if item[2] in self.obj_ids)
         if len(contact_ids) > 1:
             if self.debug:
                 print('Warning: Multiple items in hand!')
@@ -221,16 +242,20 @@ class Environment:
         left_index = self.joints['left_inner_finger_pad_joint'].id
         right_index = self.joints['right_inner_finger_pad_joint'].id
 
-        contact_left = p.getContactPoints(bodyA=self.robot_id, linkIndexA=left_index)
-        contact_right = p.getContactPoints(bodyA=self.robot_id, linkIndexA=right_index)
+        contact_left = p.getContactPoints(
+            bodyA=self.robot_id, linkIndexA=left_index)
+        contact_right = p.getContactPoints(
+            bodyA=self.robot_id, linkIndexA=right_index)
 
         if bool_operator == 'and' and not (contact_right and contact_left):
             return False
 
         # Check the force
-        left_force = p.getJointState(self.robot_id, left_index)[2][:3]  # 6DOF, Torque is ignored
+        left_force = p.getJointState(self.robot_id, left_index)[
+            2][:3]  # 6DOF, Torque is ignored
         right_force = p.getJointState(self.robot_id, right_index)[2][:3]
-        left_norm, right_norm = np.linalg.norm(left_force), np.linalg.norm(right_force)
+        left_norm, right_norm = np.linalg.norm(
+            left_force), np.linalg.norm(right_force)
         # print(left_norm, right_norm)
         if bool_operator == 'and':
             return left_norm > force and right_norm > force
@@ -238,15 +263,20 @@ class Environment:
             return left_norm > force or right_norm > force
 
     def move_gripper(self, gripper_opening_length: float, step: int = 120):
-        gripper_opening_length = np.clip(gripper_opening_length, *self.gripper_open_limit)
-        gripper_opening_angle = 0.715 - math.asin((gripper_opening_length - 0.010) / 0.1143)  # angle calculation
+        gripper_opening_length = np.clip(
+            gripper_opening_length, *self.gripper_open_limit)
+        gripper_opening_angle = 0.715 - \
+            math.asin((gripper_opening_length - 0.010) /
+                      0.1143)  # angle calculation
         for _ in range(step):
-            self.controlGripper(controlMode=p.POSITION_CONTROL, targetPosition=gripper_opening_angle)
+            self.controlGripper(controlMode=p.POSITION_CONTROL,
+                                targetPosition=gripper_opening_angle)
             self.step_simulation()
 
     def auto_close_gripper(self, step: int = 120, check_contact: bool = False) -> bool:
         # Get initial gripper open position
-        initial_position = p.getJointState(self.robot_id, self.joints[self.mimicParentName].id)[0]
+        initial_position = p.getJointState(
+            self.robot_id, self.joints[self.mimicParentName].id)[0]
         initial_position = math.sin(0.715 - initial_position) * 0.1143 + 0.010
         for step_idx in range(1, step):
             current_target_open_length = initial_position - step_idx / step * initial_position
@@ -261,10 +291,13 @@ class Environment:
         return False
 
     def calc_z_offset(self, gripper_opening_length: float):
-        gripper_opening_length = np.clip(gripper_opening_length, *self.gripper_open_limit)
-        gripper_opening_angle = 0.715 - math.asin((gripper_opening_length - 0.010) / 0.1143)
+        gripper_opening_length = np.clip(
+            gripper_opening_length, *self.gripper_open_limit)
+        gripper_opening_angle = 0.715 - \
+            math.asin((gripper_opening_length - 0.010) / 0.1143)
         if self.gripper_type == '140':
-            gripper_length = 10.3613 * np.sin(1.64534-0.24074 * (gripper_opening_angle / np.pi)) - 10.1219
+            gripper_length = 10.3613 * \
+                np.sin(1.64534-0.24074 * (gripper_opening_angle / np.pi)) - 10.1219
         else:
             gripper_length = 1.231 - 1.1
         return gripper_length
@@ -286,14 +319,15 @@ class Environment:
 
     def reset_all_obj(self):
         for i, obj_id in enumerate(self.obj_ids):
-            p.resetBasePositionAndOrientation(obj_id, self.obj_positions[i], self.obj_orientations[i])
+            p.resetBasePositionAndOrientation(
+                obj_id, self.obj_positions[i], self.obj_orientations[i])
         self.wait_until_all_still()
 
     def update_obj_states(self):
         for i, obj_id in enumerate(self.obj_ids):
             pos, orn = p.getBasePositionAndOrientation(obj_id)
             self.obj_positions[i] = pos
-            self.obj_orientations[i] = orn  
+            self.obj_orientations[i] = orn
 
     def load_obj(self, path, pos, yaw, mod_orn=False, mod_stiffness=False):
         orn = p.getQuaternionFromEuler([0, 0, yaw])
@@ -304,33 +338,35 @@ class Environment:
             minm, maxm = aabb[0][1], aabb[1][1]
             orn = p.getQuaternionFromEuler([0, np.pi*0.5, yaw])
         else:
-            minm, maxm = aabb[0][2], aabb[1][2]    
-        
-        pos[2] += (maxm - minm) / 2 
+            minm, maxm = aabb[0][2], aabb[1][2]
+
+        pos[2] += (maxm - minm) / 2
         p.resetBasePositionAndOrientation(obj_id, pos, orn)
-        #change dynamics
+        # change dynamics
         if mod_stiffness:
-            p.changeDynamics(obj_id, 
-                            -1, lateralFriction=1, 
-                            rollingFriction=0.001, 
-                            spinningFriction=0.002,
-                            restitution=0.01, 
-                            contactStiffness=100000, 
-                            contactDamping=0.0)
-        else:   
-            p.changeDynamics(obj_id, 
-                            -1, lateralFriction=1, 
-                            rollingFriction=0.002, 
-                            spinningFriction=0.001,
-                            restitution=0.01)
+            p.changeDynamics(obj_id,
+                             -1, lateralFriction=1,
+                             rollingFriction=0.001,
+                             spinningFriction=0.002,
+                             restitution=0.01,
+                             contactStiffness=100000,
+                             contactDamping=0.0)
+        else:
+            p.changeDynamics(obj_id,
+                             -1, lateralFriction=1,
+                             rollingFriction=0.002,
+                             spinningFriction=0.001,
+                             restitution=0.01)
         self.obj_ids.append(obj_id)
         self.obj_positions.append(pos)
         self.obj_orientations.append(orn)
         return obj_id, pos, orn
 
     def load_isolated_obj(self, path, mod_orn=False, mod_stiffness=False):
-        r_x = random.uniform(self.obj_init_pos[0] - 0.1, self.obj_init_pos[0] + 0.1)
-        r_y = random.uniform(self.obj_init_pos[1] - 0.1, self.obj_init_pos[1] + 0.1)
+        r_x = random.uniform(
+            self.obj_init_pos[0] - 0.1, self.obj_init_pos[0] + 0.1)
+        r_y = random.uniform(
+            self.obj_init_pos[1] - 0.1, self.obj_init_pos[1] + 0.1)
         yaw = random.uniform(0, np.pi)
 
         pos = [r_x, r_y, self.Z_TABLE_TOP]
@@ -345,39 +381,44 @@ class Environment:
         box_height = 0.2
         box_z = self.Z_TABLE_TOP + (box_height/2)
         id1 = p.loadURDF(f'environment/urdf/objects/slab{num}.urdf',
-                                [self.obj_init_pos[0] - box_width/2, self.obj_init_pos[1], box_z],
-                                p.getQuaternionFromEuler([0, 0, 0]),
-                                useFixedBase=True)
+                         [self.obj_init_pos[0] - box_width /
+                             2, self.obj_init_pos[1], box_z],
+                         p.getQuaternionFromEuler([0, 0, 0]),
+                         useFixedBase=True)
         id2 = p.loadURDF(f'environment/urdf/objects/slab{num}.urdf',
-                                [self.obj_init_pos[0] + box_width/2, self.obj_init_pos[1], box_z],
-                                p.getQuaternionFromEuler([0, 0, 0]),
-                                useFixedBase=True)
+                         [self.obj_init_pos[0] + box_width /
+                             2, self.obj_init_pos[1], box_z],
+                         p.getQuaternionFromEuler([0, 0, 0]),
+                         useFixedBase=True)
         id3 = p.loadURDF(f'environment/urdf/objects/slab{num}.urdf',
-                                [self.obj_init_pos[0], self.obj_init_pos[1] + box_width/2, box_z],
-                                p.getQuaternionFromEuler([0, 0, np.pi*0.5]),
-                                useFixedBase=True)
+                         [self.obj_init_pos[0], self.obj_init_pos[1] +
+                             box_width/2, box_z],
+                         p.getQuaternionFromEuler([0, 0, np.pi*0.5]),
+                         useFixedBase=True)
         id4 = p.loadURDF(f'environment/urdf/objects/slab{num}.urdf',
-                                [self.obj_init_pos[0] , self.obj_init_pos[1] - box_width/2, box_z],
-                                p.getQuaternionFromEuler([0, 0, np.pi*0.5]),
-                                useFixedBase=True)
+                         [self.obj_init_pos[0], self.obj_init_pos[1] -
+                             box_width/2, box_z],
+                         p.getQuaternionFromEuler([0, 0, np.pi*0.5]),
+                         useFixedBase=True)
         return [id1, id2, id3, id4]
 
     def create_pile(self, obj_info):
         box_ids = self.create_temp_box(0.30, 1)
         for path, mod_orn, mod_stiffness in obj_info:
             margin = 0.025
-            r_x = random.uniform(self.obj_init_pos[0] - margin, self.obj_init_pos[0] + margin)
-            r_y = random.uniform(self.obj_init_pos[1] - margin, self.obj_init_pos[1] + margin)
+            r_x = random.uniform(
+                self.obj_init_pos[0] - margin, self.obj_init_pos[0] + margin)
+            r_y = random.uniform(
+                self.obj_init_pos[1] - margin, self.obj_init_pos[1] + margin)
             yaw = random.uniform(0, np.pi)
             pos = [r_x, r_y, 1.0]
-            # pos = [self.obj_init_pos[0], self.obj_init_pos[1], 1.0]
-            # yaw = random.uniform(0, np.pi)
 
-            obj_id, _, _ = self.load_obj(path, pos, yaw, mod_orn, mod_stiffness)       
+            obj_id, _, _ = self.load_obj(
+                path, pos, yaw, mod_orn, mod_stiffness)
             for _ in range(10):
                 self.step_simulation()
             self.wait_until_still(obj_id, 150)
-        
+
         self.wait_until_all_still()
         for handle in box_ids:
             p.removeBody(handle)
@@ -406,7 +447,8 @@ class Environment:
             p.stepSimulation()
             contact_a = p.getContactPoints(obj_id)
             # If object collides with any other object, stop
-            contact_ids = set(item[2] for item in contact_a if item[2] in self.obj_ids)
+            contact_ids = set(item[2]
+                              for item in contact_a if item[2] in self.obj_ids)
             if len(contact_ids) != 0:
                 collison = True
         # Move one step back
@@ -417,27 +459,32 @@ class Environment:
         else:
             new_pos[axis] += step
         p.resetBasePositionAndOrientation(obj_id, new_pos, orn)
-    
+
     def create_packed(self, obj_info):
         init_x, init_y, init_z = self.obj_init_pos[0], self.obj_init_pos[1], self.Z_TABLE_TOP
         yaw = random.uniform(0, np.pi)
         path, mod_orn, mod_stiffness = obj_info[0]
-        center_obj, _, _ = self.load_obj(path, [init_x, init_y, init_z], yaw, mod_orn, mod_stiffness)
+        center_obj, _, _ = self.load_obj(
+            path, [init_x, init_y, init_z], yaw, mod_orn, mod_stiffness)
 
         margin = 0.3
         yaw = random.uniform(0, np.pi)
         path, mod_orn, mod_stiffness = obj_info[1]
-        left_obj_id, _, _ = self.load_obj(path, [init_x-margin, init_y, init_z], yaw, mod_orn, mod_stiffness)    
+        left_obj_id, _, _ = self.load_obj(
+            path, [init_x-margin, init_y, init_z], yaw, mod_orn, mod_stiffness)
         yaw = random.uniform(0, np.pi)
         path, mod_orn, mod_stiffness = obj_info[2]
-        top_obj_id, _, _ = self.load_obj(path, [init_x, init_y+margin, init_z], yaw, mod_orn, mod_stiffness)    
+        top_obj_id, _, _ = self.load_obj(
+            path, [init_x, init_y+margin, init_z], yaw, mod_orn, mod_stiffness)
         yaw = random.uniform(0, np.pi)
         path, mod_orn, mod_stiffness = obj_info[3]
-        right_obj_id, _, _ = self.load_obj(path, [init_x+margin, init_y, init_z], yaw, mod_orn, mod_stiffness)       
+        right_obj_id, _, _ = self.load_obj(
+            path, [init_x+margin, init_y, init_z], yaw, mod_orn, mod_stiffness)
         yaw = random.uniform(0, np.pi)
         path, mod_orn, mod_stiffness = obj_info[4]
-        down_obj_id, _, _ = self.load_obj(path, [init_x, init_y-margin, init_z], yaw, mod_orn, mod_stiffness) 
-        
+        down_obj_id, _, _ = self.load_obj(
+            path, [init_x, init_y-margin, init_z], yaw, mod_orn, mod_stiffness)
+
         self.wait_until_all_still()
         step = 0.01
         self.move_obj_along_axis(left_obj_id, 0, '+', step, init_x)
@@ -453,7 +500,8 @@ class Environment:
         y = np.clip(y, *self.ee_position_limit[1])
         z = np.clip(z, *self.ee_position_limit[2])
         # set damping for robot arm and gripper
-        jd = [0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+        jd = [0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
+              0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
         jd = jd * 0
         still_open_flag_ = True  # Hot fix
         for _ in range(max_step):
@@ -461,7 +509,8 @@ class Environment:
             joint_poses = p.calculateInverseKinematics(self.robot_id, self.eef_id, [x, y, z], orn,
                                                        maxNumIterations=100, jointDamping=jd
                                                        )
-            for i, name in enumerate(self.controlJoints[:-1]):  # Filter out the gripper
+            # Filter out the gripper
+            for i, name in enumerate(self.controlJoints[:-1]):
                 joint = self.joints[name]
                 pose = joint_poses[i]
                 # control robot end-effector
@@ -478,9 +527,11 @@ class Environment:
                     print('Collision detected!', self.check_grasped_id())
                 return False, p.getLinkState(self.robot_id, self.eef_id)[0:2]
             # Check xyz and rpy error
-            real_xyz, real_xyzw = p.getLinkState(self.robot_id, self.eef_id)[0:2]
+            real_xyz, real_xyzw = p.getLinkState(
+                self.robot_id, self.eef_id)[0:2]
             roll, pitch, yaw = p.getEulerFromQuaternion(orn)
-            real_roll, real_pitch, real_yaw = p.getEulerFromQuaternion(real_xyzw)
+            real_roll, real_pitch, real_yaw = p.getEulerFromQuaternion(
+                real_xyzw)
             if np.linalg.norm(np.array((x, y, z)) - real_xyz) < 0.001 \
                     and np.abs((roll - real_roll, pitch - real_pitch, yaw - real_yaw)).sum() < 0.001:
                 if verbose:
@@ -499,8 +550,8 @@ class Environment:
         roll: float,   for grasp, it should be in [-pi/2, pi/2)
         """
         succes_grasp, succes_target = False, False
-        grasped_obj_id = None        
-        
+        grasped_obj_id = None
+
         x, y, z = pos
         # Substracht gripper finger length from z
         z -= self.finger_length
@@ -535,15 +586,17 @@ class Environment:
         # Move object to target zone
         y_drop = self.TARGET_ZONE_POS[2] + z_offset + obj_height + 0.15
         y_orn = p.getQuaternionFromEuler([-np.pi*0.25, np.pi/2, 0.0])
-        # y_orn = np.array(p.getLinkState(self.robotID, self.eefID)[1:2][0])
 
         self.move_away_arm()
-        self.move_ee([self.TARGET_ZONE_POS[0], self.TARGET_ZONE_POS[1], 1.25, y_orn])
-        self.move_ee([self.TARGET_ZONE_POS[0], self.TARGET_ZONE_POS[1], y_drop, y_orn])
+        self.move_ee([self.TARGET_ZONE_POS[0],
+                     self.TARGET_ZONE_POS[1], 1.25, y_orn])
+        self.move_ee([self.TARGET_ZONE_POS[0],
+                     self.TARGET_ZONE_POS[1], y_drop, y_orn])
         self.move_gripper(0.085)
-        self.move_ee([self.TARGET_ZONE_POS[0], self.TARGET_ZONE_POS[1], self.GRIPPER_MOVING_HEIGHT, y_orn])
+        self.move_ee([self.TARGET_ZONE_POS[0], self.TARGET_ZONE_POS[1],
+                     self.GRIPPER_MOVING_HEIGHT, y_orn])
 
-        #Wait then check if object is in target zone
+        # Wait then check if object is in target zone
         for _ in range(50):
             self.step_simulation()
         if self.check_target_reached(grasped_obj_id):

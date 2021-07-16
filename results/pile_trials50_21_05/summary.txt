@@ -1,4 +1,0 @@
-Stats for 4 objects out of 50 trials
-Target acc=0.630 (165/262)
-Grasp acc=0.676 (177/262)
-Percentage objects cleared=0.825 (165/200)

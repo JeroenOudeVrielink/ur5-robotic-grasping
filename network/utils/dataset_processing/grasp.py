@@ -332,8 +332,8 @@ class GraspRectangle:
         :param color: matplotlib color code (optional)
         """
         points = np.vstack((self.points, self.points[0]))
-        ax.plot(points[:, 1], points[:, 0], color=color)
-        ax.plot(self.center[1], self.center[0], '.')
+        ax.plot(points[:, 1], points[:, 0], color=color, lineWidth=3)
+        ax.plot(self.center[1], self.center[0], 'o')
         ax.legend(['score: {0:.2f}'.format(q)])
 
     def zoom(self, factor, center):
