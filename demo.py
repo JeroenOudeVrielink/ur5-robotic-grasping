@@ -13,11 +13,11 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Grasping demo')
 
     parser.add_argument('--scenario', type=str, default='isolated',
-                        help='Grasping scenario: isolated, pack, or pile')
+                        help='Grasping scenario (isolated/pack/pile)')
     parser.add_argument('--runs', type=int, default=1,
                         help='Number of runs the scenario is executed')
     parser.add_argument('--show-network-output', dest='output', type=bool, default=False,
-                        help='Show network output')
+                        help='Show network output (True/False)')
 
     args = parser.parse_args()
     return args
