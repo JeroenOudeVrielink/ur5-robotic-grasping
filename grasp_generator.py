@@ -22,8 +22,8 @@ class GraspGenerator:
     MAX_GRASP = 0.085
 
     def __init__(self, net_path, camera, depth_radius):
-        self.net = torch.load(net_path)
-        self.device = get_device(force_cpu=False)
+        self.net = torch.load(net_path, map_location='cpu')
+        self.device = get_device(force_cpu=True)
 
         self.near = camera.near
         self.far = camera.far
