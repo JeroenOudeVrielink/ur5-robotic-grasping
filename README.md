@@ -5,6 +5,8 @@
 ##
 <p align="center">
   <img src="images/setup_pybullet.png" width="500" title="">
+  <img src="images/pile.gif" width="500" title="">
+
 </p>
 <p align="center">
   Fig.1 Experimental setup: The left image shows the UR5e robotic arm and a target object placed on the desk. The target tray is highlighted red. The green line denotes the camera’s line of sight. The right image shows the corresponding view of the camera.
