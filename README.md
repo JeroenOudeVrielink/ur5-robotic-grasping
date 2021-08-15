@@ -1,4 +1,4 @@
-# Learning to grasp objects in highly cluttered environments using Deep Convolutional Neural Networks
+## Learning to grasp objects in highly cluttered environments using Deep Convolutional Neural Networks
 
 ###### Jeroen Oude Vrielink, [Hamidreza Kasaei](https://hkasaei.github.io/) | [video](https://youtu.be/fXpZMnZUZoA) | [thesis](https://fse.studenttheses.ub.rug.nl/25369/)
 
