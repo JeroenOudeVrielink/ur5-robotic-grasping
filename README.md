@@ -11,7 +11,7 @@
 
 </p>
 <p align="center">
-  Fig.1 Experimental setup: The left image shows the UR5e robotic arm and a target object placed on the desk. The target tray is highlighted red. The green line denotes the camera’s line of sight. The right image shows the corresponding view of the camera.
+  Fig.1 Experimental setup consists of a UR5e robotic arm, an RGB-D camera, a set of objects placed on the desk in three scenarios: (left) isolated scenario, (center) pcaked scenario, and (right) pile scenario. The green line denotes the camera’s line of sight. 
 </p>
 
 # ur5-robotic-grasping
