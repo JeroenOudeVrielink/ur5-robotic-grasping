@@ -2,6 +2,7 @@
 
 ###### Jeroen Oude Vrielink, [Hamidreza Kasaei](https://hkasaei.github.io/) | [video](https://youtu.be/fXpZMnZUZoA) | [thesis](https://fse.studenttheses.ub.rug.nl/25369/)
 
+##
 <p align="center">
   <img src="images/setup_pybullet.png" width="500" title="">
 </p>
