@@ -4,9 +4,9 @@
 
 ##
 <p align="center">
-  <img src="images/isolated.gif" width="300" title="">
-  <img src="images/pack.gif" width="300" title="">
-  <img src="images/pile.gif" width="300" title="">
+  <img src="images/isolated.gif" width="250" title="">
+  <img src="images/packed.gif" width="250" title="">
+  <img src="images/pile.gif" width="250" title="">
 
 
 </p>
