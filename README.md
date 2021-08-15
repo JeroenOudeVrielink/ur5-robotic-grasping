@@ -40,6 +40,14 @@ Example:
 ```bash
 python demo.py --scenario=isolated --runs=1 --show-network-output=False
 ```
+
+Note: if you installed cuda on your machine, you need to run the following line in your terminal first: 
+
+```bash
+export CUDA_VISIBLE_DEVICES=""
+```
+
+
 ## References
 Sulabh Kumra, Shirin Joshi, and Ferat Sahin.  Antipodal robotic grasping using generative residual convolutional neural network. In 2020 IEEE/RSJ International Conference on Intelligent Robots and Systems(IROS), pages 9626–9633, 2020. doi: 10.1109/IROS45743.2020.9340777.
 
