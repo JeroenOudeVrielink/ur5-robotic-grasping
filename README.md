@@ -10,7 +10,7 @@
 
 
 </p>
-<p align="center">
+<p align="left">
   Fig.1 Experimental setup consists of a UR5e robotic arm, an RGB-D camera, a set of objects placed on the desk in three scenarios: (left) isolated scenario, (center) pcaked scenario, and (right) pile scenario. The green line denotes the camera’s line of sight. 
 </p>
 
