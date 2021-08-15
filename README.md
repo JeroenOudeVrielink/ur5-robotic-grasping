@@ -1,3 +1,14 @@
+# Learning to grasp objects in highly cluttered environments using Deep Convolutional Neural Networks
+
+###### Jeroen Oude Vrielink, [Hamidreza Kasaei](https://hkasaei.github.io/) | [video](https://youtu.be/fXpZMnZUZoA) | [thesis](https://fse.studenttheses.ub.rug.nl/25369/)
+
+<p align="center">
+  <img src="images/setup_pybullet.png" width="500" title="">
+</p>
+<p align="center">
+  Fig.1 Experimental setup: The left image shows the UR5e robotic arm and a target object placed on the desk. The target tray is highlighted red. The green line denotes the camera’s line of sight. The right image shows the corresponding view of the camera.
+</p>
+
 # ur5-robotic-grasping
 This repository implements the grasp inference method of Kumra et al. (2020) in a robotic simulation developed in PyBullet. Kumra et al. (2020) propose a generative residual convolutional neural network which predicts one or multiple antipodal grasps using both RGB and depth images of the object scene. Three different grasping scenarios have been implemented. These include objects in isolation, objects packed together, and objects in a pile (Kasaei et al., 2021). 
 
