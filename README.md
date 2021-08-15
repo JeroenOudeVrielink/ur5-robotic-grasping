@@ -2,7 +2,7 @@
 
 ###### Jeroen Oude Vrielink, [Hamidreza Kasaei](https://hkasaei.github.io/) | [video](https://youtu.be/fXpZMnZUZoA) | [thesis](https://fse.studenttheses.ub.rug.nl/25369/)
 
-##
+
 <p align="center">
   <img src="images/isolated.gif" width="250" title="">
   <img src="images/packed.gif" width="250" title="">
@@ -13,8 +13,9 @@
 <p align="left">
    Our experimental setup consists of a UR5e robotic arm, an RGB-D camera, a set of objects placed on the desk in three scenarios: (left) isolated scenario, (center) packed scenario, and (right) pile scenario. The green line denotes the camera’s line of sight.
 </p>
+##
 
-# ur5-robotic-grasping
+### This repository 
 This repository implements the grasp inference method of Kumra et al. (2020) in a robotic simulation developed in PyBullet. Kumra et al. (2020) propose a generative residual convolutional neural network which predicts one or multiple antipodal grasps using both RGB and depth images of the object scene. Three different grasping scenarios have been implemented. These include objects in isolation, objects packed together, and objects in a pile (Kasaei et al., 2021). 
 
 All code in the directory 'network' is an adaptation of Kumra's open source code that was taken from the following repository: https://github.com/skumra/robotic-grasping  
