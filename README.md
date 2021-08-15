@@ -1,7 +1,5 @@
 ## Learning to Grasp Objects in Highly Cluttered Environments using Deep Convolutional Neural Networks
 
-###### Jeroen Oude Vrielink, [Hamidreza Kasaei](https://hkasaei.github.io/) | [video](https://youtu.be/fXpZMnZUZoA) | [thesis](https://fse.studenttheses.ub.rug.nl/25369/)
-
 
 <p align="center">
   <img src="images/isolated.gif" width="250" title="">
@@ -13,6 +11,9 @@
 <p align="left">
    Our experimental setup consists of a UR5e robotic arm, an RGB-D camera, a set of objects placed on the desk in three scenarios: (left) isolated scenario, (center) packed scenario, and (right) pile scenario. The green line denotes the camera’s line of sight.
 </p>
+
+###### Jeroen Oude Vrielink, [Hamidreza Kasaei](https://hkasaei.github.io/) | [video](https://youtu.be/fXpZMnZUZoA) | [thesis](https://fse.studenttheses.ub.rug.nl/25369/)
+
 
 ## 
 
