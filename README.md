@@ -4,8 +4,10 @@
 
 ##
 <p align="center">
-  <img src="images/setup_pybullet.png" width="500" title="">
-  <img src="images/pile.gif" width="500" title="">
+  <img src="images/isolated.gif" width="300" title="">
+  <img src="images/pack.gif" width="300" title="">
+  <img src="images/pile.gif" width="300" title="">
+
 
 </p>
 <p align="center">
