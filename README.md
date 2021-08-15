@@ -31,7 +31,7 @@ Ensure you are running Python>=3.6.5 and import the required libraries by runnin
 pip install -r requirements.txt
 ```
 
-It will install a set of packages, including: numpy, opencv-python, matplotlib, scikit-image, imageio, torch, torchvision, torchsummary, tensorboardX, pyrealsense2, Pillow, pandas, matplotlib, pybullet
+It will install a set of packages, including: numpy, opencv-python, matplotlib, scikit-image, imageio, torch, torchvision, torchsummary, tensorboardX, pyrealsense2, Pillow, pandas, matplotlib, attrdict, pybullet
 
 ## Demo
 Running the script 'demo.py' gives a demonstration of the simulation. The demo can be run with three different grasping scenarios. Run 'demo.py --help' to see a full list of options.
